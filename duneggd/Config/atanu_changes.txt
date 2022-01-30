@@ -1,0 +1,19 @@
+Configs
+------------------------
+ND_Hall_Air_Volume.cfg
+    changed subbuilders
+SAND_MAGNET.cfg
+    changed subbuilders
+SAND_ECAL.cfg 
+    line # 20, added "buildEndcap         = False" line
+
+
+SubDetector
+------------------------
+SAND.py
+    line # 34, self.LVRadius=Q("3.8m") changed from 3.6m to accommodate EMI that spans 330 cm to 371.X cm
+
+Components
+------------------------
+SandECalEndcap.py
+    Line # i12, 20, 44, 45

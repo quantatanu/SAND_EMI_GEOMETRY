@@ -1,0 +1,885 @@
+//MY LIBRARIES
+#include "HEADERS/MyPDGLib.h"
+#include "HEADERS/distance.h"
+
+//STL
+#include <iostream>
+#include <cstddef>
+#include <sstream>
+#include <vector>
+#include <stdexcept>
+#include <assert.h>
+#include <iterator>
+#include <utility> 
+#include <math.h>
+
+
+//root classes
+#include <TROOT.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TBranch.h>
+#include <TBits.h>
+#include <TObjString.h>
+#include <TString.h>
+#include <TCanvas.h>
+#include <TApplication.h>
+#include <TDatabasePDG.h>
+#include <TParticlePDG.h>
+#include "TH3F.h"
+#include "TH2F.h"
+#include "TH1F.h"
+#include "TProfile.h"
+#include "TCanvas.h"
+#include "TStyle.h"
+#include "TF1.h"
+#include "TLegend.h"
+#include "TGaxis.h"
+#include "TExec.h"
+#include "TGraphPolar.h"
+#include "TGraph.h"
+#include "TGraphErrors.h"
+#include "TGraphPolargram.h"
+#include "TMath.h"
+#include "TPaveStats.h"
+#include "TTimer.h"
+
+
+int main(int argc, char** argv){
+    bool using_new_version = false; // StdHepReScat and G2NeutEvtCode branches available only for versions >= 2.5.1
+    const int kNPmax = 10000;
+
+    gStyle->SetCanvasPreferGL(true); //for colors
+    gStyle->SetTextFont(2);
+    gStyle->SetTitleFont(2);
+    gStyle->SetTitleFontSize(0.06);
+    gStyle->SetStatW(0.5);
+
+	std::string print = "", print2 = "", print3 = "", post_vol = "", all_args = "";
+
+	if (argc < 4)
+	{
+		std::cout << "\n\033[91m Error: at least the rotracker input file name (arg-1), the post volume rmin (arg-2) and rmax (arg-3) must be provided!!! Exiting... \033[39m\n\n";
+		return 1;
+	}
+
+	for (int args = 2; args < argc; args++)
+	{
+		all_args = all_args + "_" + argv[args];
+	}
+
+	if (all_args.find("-P") != std::string::npos)
+	{
+		std::cout << "Parameter -P passed => Full event display\n";
+		print = "-P";
+	}
+	if (all_args.find("-Q") != std::string::npos)
+	{
+		std::cout << "Parameter -Q passed => Verbose rock process\n";
+		print2 = "-Q";
+	}
+	if (all_args.find("-D") != std::string::npos)
+	{
+		std::cout << "Parameter -D passed => Plots will be displayed\n";
+		print3 = "-D";
+	}
+
+    std::string Fname = argv[1];
+	if (Fname.find(".root") == std::string::npos)
+	{
+		std::cout << "\n\033[91m Error: invalid rotracker input file!!! Exiting... \033[39m\n\n";
+		return 2;
+	}
+
+    // rock boundary radii
+    distance d;
+    double rock_rmin = atof(argv[2]);
+    double rock_rmax = atof(argv[3]);
+    post_vol = d.where_is((rock_rmin+rock_rmax)*10./2);
+    TString Tpost_vol = post_vol.c_str();
+    
+	TApplication rack("rack",0,0);
+    
+    TString filename = argv[1];
+    std::size_t found = Fname.find_last_of("/\\");
+    Fname = Fname.substr(found+1);
+
+    TFile file(filename, "READ");
+    TTree * tree = (TTree *) file.Get("gRooTracker");
+    assert(tree);
+
+    TBits*      EvtFlags = 0;             // generator-specific event flags
+    TObjString* EvtCode = 0;              // generator-specific string with 'event code'
+    int         EvtNum;                   // event num.
+    double      EvtXSec;                  // cross section for selected event (1E-38 cm2)
+    double      EvtDXSec;                 // cross section for selected event kinematics (1E-38 cm2 /{K^n})
+    double      EvtWght;                  // weight for that event
+    double      EvtProb;                  // probability for that event (given cross section, path lengths, etc)
+    double      EvtVtx[4];                // event vertex position in detector coord syst (in geom units)
+    int         StdHepN;                  // number of particles in particle array 
+    int         StdHepPdg   [kNPmax];     // stdhep-like particle array: pdg codes (& generator specific codes for pseudoparticles)
+    int         StdHepStatus[kNPmax];     // stdhep-like particle array: generator-specific status code
+    int         StdHepRescat[kNPmax];     // stdhep-like particle array: intranuclear rescattering code [ >= v2.5.1 ]
+    double      StdHepX4    [kNPmax][4];  // stdhep-like particle array: 4-x (x, y, z, t) of particle in hit nucleus frame (fm)
+    double      StdHepP4    [kNPmax][4];  // stdhep-like particle array: 4-p (px,py,pz,E) of particle in LAB frame (GeV)
+    double      StdHepPolz  [kNPmax][3];  // stdhep-like particle array: polarization vector
+    int         StdHepFd    [kNPmax];     // stdhep-like particle array: first daughter
+    int         StdHepLd    [kNPmax];     // stdhep-like particle array: last  daughter 
+    int         StdHepFm    [kNPmax];     // stdhep-like particle array: first mother
+    int         StdHepLm    [kNPmax];     // stdhep-like particle array: last  mother
+    int         G2NeutEvtCode;            // NEUT code for the current GENIE event [ >= v2.5.1 ]
+    int         NuParentPdg;              // parent hadron pdg code
+    int         NuParentDecMode;          // parent hadron decay mode
+    double      NuParentDecP4 [4];        // parent hadron 4-momentum at decay
+    double      NuParentDecX4 [4];        // parent hadron 4-position at decay
+    double      NuParentProP4 [4];        // parent hadron 4-momentum at production
+    double      NuParentProX4 [4];        // parent hadron 4-position at production
+    int         NuParentProNVtx;          // parent hadron vtx id
+
+    // get branches
+    TBranch * brEvtFlags        = tree -> GetBranch ("EvtFlags");
+    TBranch * brEvtCode         = tree -> GetBranch ("EvtCode");
+    TBranch * brEvtNum          = tree -> GetBranch ("EvtNum");
+    TBranch * brEvtXSec         = tree -> GetBranch ("EvtXSec");
+    TBranch * brEvtDXSec        = tree -> GetBranch ("EvtDXSec");
+    TBranch * brEvtWght         = tree -> GetBranch ("EvtWght");
+    TBranch * brEvtProb         = tree -> GetBranch ("EvtProb");
+    TBranch * brEvtVtx          = tree -> GetBranch ("EvtVtx");
+    TBranch * brStdHepN         = tree -> GetBranch ("StdHepN");
+    TBranch * brStdHepPdg       = tree -> GetBranch ("StdHepPdg");
+    TBranch * brStdHepStatus    = tree -> GetBranch ("StdHepStatus");
+    TBranch * brStdHepRescat    = (using_new_version) ? tree -> GetBranch ("StdHepRescat") : 0;
+    TBranch * brStdHepX4        = tree -> GetBranch ("StdHepX4");
+    TBranch * brStdHepP4        = tree -> GetBranch ("StdHepP4");
+    TBranch * brStdHepPolz      = tree -> GetBranch ("StdHepPolz");
+    TBranch * brStdHepFd        = tree -> GetBranch ("StdHepFd");
+    TBranch * brStdHepLd        = tree -> GetBranch ("StdHepLd");
+    TBranch * brStdHepFm        = tree -> GetBranch ("StdHepFm");
+    TBranch * brStdHepLm        = tree -> GetBranch ("StdHepLm");
+    TBranch * brG2NeutEvtCode   = (using_new_version) ? tree -> GetBranch ("G2NeutEvtCode") : 0;
+    TBranch * brNuParentPdg     = tree -> GetBranch ("NuParentPdg");
+    TBranch * brNuParentDecMode = tree -> GetBranch ("NuParentDecMode");
+    TBranch * brNuParentDecP4   = tree -> GetBranch ("NuParentDecP4");
+    TBranch * brNuParentDecX4   = tree -> GetBranch ("NuParentDecX4");
+    TBranch * brNuParentProP4   = tree -> GetBranch ("NuParentProP4");     
+    TBranch * brNuParentProX4   = tree -> GetBranch ("NuParentProX4");     
+    TBranch * brNuParentProNVtx = tree -> GetBranch ("NuParentProNVtx");   
+
+    // set address
+    brEvtFlags        -> SetAddress ( &EvtFlags         );
+    brEvtCode         -> SetAddress ( &EvtCode          );
+    brEvtNum          -> SetAddress ( &EvtNum           );
+    brEvtXSec         -> SetAddress ( &EvtXSec          );
+    brEvtDXSec        -> SetAddress ( &EvtDXSec         );
+    brEvtWght         -> SetAddress ( &EvtWght          );
+    brEvtProb         -> SetAddress ( &EvtProb          );
+    brEvtVtx          -> SetAddress (  EvtVtx           );
+    brStdHepN         -> SetAddress ( &StdHepN          );
+    brStdHepPdg       -> SetAddress (  StdHepPdg        );
+    brStdHepStatus    -> SetAddress (  StdHepStatus     );
+    if(using_new_version) {
+    brStdHepRescat    -> SetAddress (  StdHepRescat     );
+    }
+    brStdHepX4        -> SetAddress (  StdHepX4         );
+    brStdHepP4        -> SetAddress (  StdHepP4         );
+    brStdHepPolz      -> SetAddress (  StdHepPolz       );
+    brStdHepFd        -> SetAddress (  StdHepFd         );
+    brStdHepLd        -> SetAddress (  StdHepLd         );
+    brStdHepFm        -> SetAddress (  StdHepFm         );
+    brStdHepLm        -> SetAddress (  StdHepLm         );
+    if(using_new_version) {
+    brG2NeutEvtCode   -> SetAddress ( &G2NeutEvtCode   );
+    }
+    brNuParentPdg     -> SetAddress ( &NuParentPdg     );
+    brNuParentDecMode -> SetAddress ( &NuParentDecMode );
+    brNuParentDecP4   -> SetAddress (  NuParentDecP4   );
+    brNuParentDecX4   -> SetAddress (  NuParentDecX4   );
+    brNuParentProP4   -> SetAddress (  NuParentProP4   );     
+    brNuParentProX4   -> SetAddress (  NuParentProX4   );     
+    brNuParentProNVtx -> SetAddress ( &NuParentProNVtx );   
+
+    int n = tree->GetEntries(); 
+	
+    
+    //HISTOGRAM DEFINITIONS AND STYLES
+	//-------------------------------------------------------------------------------------------------------------------------------------------------------------
+    double MinEnergy = 0, MaxEnergy = 10000;
+	int nbinEnergyW = 45;
+	int nbinEnergy = (MaxEnergy - MinEnergy)/nbinEnergyW;
+    double MinMomentum = 0, MaxMomentum = 30000;
+	int nbinMomentumW = 1;
+	int nbinMomentum = (MaxMomentum - MinMomentum)/nbinMomentumW;
+    double MinMass = 0, MaxMass = 1000;
+	int nbinMassW = 1;
+	int nbinMass = (MaxMass - MinMass)/nbinMassW;
+	
+    //event coords distribution
+	TH2F events_yz("events_yz","Eevents in detector coords.", (2800 - 1900), 1900, 2800, (400+800), -800, 400);
+	//TH3F events_yz("events_yz","Eevents in detector coords.", 430, -215, 215, (2800 - 1900), 1900, 2800, (200+600), -600, 200);
+	events_yz.GetXaxis()->SetTitle("Z (cm)");
+	events_yz.GetYaxis()->SetTitle("Y (cm)");
+	//events_yz.GetZaxis()->SetTitle("Y (cm)");
+	events_yz.SetMarkerColor(kRed);
+	
+	//####################################################  MUONS START ################################################################################################################################
+	// FOR MUONS
+    //energy distribution
+	TH1F orig_primary_muminus_energy("orig_primary_muminus_energy","Energy distribution of the original #mu^{-} " + Tpost_vol + " orig prim. #mu^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F crossed_primary_muminus_mom_energy("crossed_primary_muminus_mom_energy","Energy distribution of the " + Tpost_vol  + " -entering #mu^{-}'s mom prim. #mu^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F crossed_primary_muminus_energy("crossed_primary_muminus_energy","Energy distribution of the " + Tpost_vol + "-entering prim. #mu^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F stuck_primary_muminus_energy("stuck_primary_muminus_energy","Energy distribution of the STT stuck prim. #mu^{-}", nbinEnergy, 0, MaxEnergy);
+
+	orig_primary_muminus_energy.GetXaxis()->SetTitle("E (MeV)");
+    orig_primary_muminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	orig_primary_muminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+    orig_primary_muminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	orig_primary_muminus_energy.GetXaxis()->SetTitleSize(0.06);	
+    orig_primary_muminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	orig_primary_muminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    //orig_primary_muminus_energy.SetFillColorAlpha(kGreen+2,0.3);
+    orig_primary_muminus_energy.SetLineColor(kBlack);
+	
+    crossed_primary_muminus_mom_energy.GetXaxis()->SetTitle("E (MeV)");
+    crossed_primary_muminus_mom_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_primary_muminus_mom_energy.GetXaxis()->SetTitleOffset(0.92);	
+	crossed_primary_muminus_mom_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_primary_muminus_mom_energy.GetXaxis()->SetTitleSize(0.06);	
+    crossed_primary_muminus_mom_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_primary_muminus_mom_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_primary_muminus_mom_energy.SetFillColorAlpha(kSpring+8,0.3);
+	crossed_primary_muminus_mom_energy.SetLineColor(kGreen+3);
+    
+    crossed_primary_muminus_energy.GetXaxis()->SetTitle("E (MeV)");
+    crossed_primary_muminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_primary_muminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+    crossed_primary_muminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_primary_muminus_energy.GetXaxis()->SetTitleSize(0.06);	
+    crossed_primary_muminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_primary_muminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_primary_muminus_energy.SetFillColorAlpha(kGreen+2,0.3);
+    crossed_primary_muminus_energy.SetLineColor(kGreen+5);
+	
+	stuck_primary_muminus_energy.GetXaxis()->SetTitle("E (MeV)");
+	stuck_primary_muminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	stuck_primary_muminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	stuck_primary_muminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	stuck_primary_muminus_energy.GetXaxis()->SetTitleSize(0.06);	
+	stuck_primary_muminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	stuck_primary_muminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    stuck_primary_muminus_energy.SetFillColorAlpha(kGray+3,0.3);
+    stuck_primary_muminus_energy.SetLineColor(kBlack);
+    stuck_primary_muminus_energy.SetFillStyle(3023);
+	//######################################################## MUONS END ###############################################################################################################################
+	
+	//####################################################  PIONS START ################################################################################################################################
+	// FOR PIONS
+	double pion_mass = 139.57018;
+   
+    //energy distribution piminus
+	TH1F crossed_piminus_mom_energy("crossed_piminus_mom_energy","Energy distribution of the  " + Tpost_vol + "-entering #pi^{-}'s mom #p^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F crossed_piminus_energy("crossed_piminus_energy","Energy distribution of the  " + Tpost_vol + "-entering #pi^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F stuck_piminus_energy("stuck_piminus_energy","Energy distribution of the stuck #pi^{-}", nbinEnergy, 0, MaxEnergy);
+	TH1F orig_piminus_energy("orig_piminus_energy","Energy distribution of the original STT #pi^{-}", nbinEnergy, 0, MaxEnergy);
+	
+	orig_piminus_energy.GetXaxis()->SetTitle("E (MeV)");
+	orig_piminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	orig_piminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	orig_piminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	orig_piminus_energy.GetXaxis()->SetTitleSize(0.06);	
+	orig_piminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	orig_piminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    //orig_piminus_energy.SetFillColorAlpha(kSpring+8,0.3);
+	orig_piminus_energy.SetLineColor(kBlack);
+    
+    crossed_piminus_mom_energy.GetXaxis()->SetTitle("E (MeV)");
+	crossed_piminus_mom_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_piminus_mom_energy.GetXaxis()->SetTitleOffset(0.92);	
+	crossed_piminus_mom_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_piminus_mom_energy.GetXaxis()->SetTitleSize(0.06);	
+	crossed_piminus_mom_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_piminus_mom_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_piminus_mom_energy.SetFillColorAlpha(kSpring+8,0.3);
+	crossed_piminus_mom_energy.SetLineColor(kGreen+3);
+    
+    crossed_piminus_energy.GetXaxis()->SetTitle("E (MeV)");
+	crossed_piminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_piminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	crossed_piminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_piminus_energy.GetXaxis()->SetTitleSize(0.06);	
+	crossed_piminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_piminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_piminus_energy.SetFillColorAlpha(kGreen+2,0.3);
+    crossed_piminus_energy.SetLineColor(kGreen+5);
+	
+	stuck_piminus_energy.GetXaxis()->SetTitle("E (MeV)");
+    stuck_piminus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	stuck_piminus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	stuck_piminus_energy.GetYaxis()->SetTitleSize(0.06);	
+	stuck_piminus_energy.GetXaxis()->SetTitleSize(0.06);	
+    stuck_piminus_energy.SetFillColorAlpha(kGray+2,0.3);
+	stuck_piminus_energy.GetYaxis()->SetLabelSize(0.06);	
+	stuck_piminus_energy.GetXaxis()->SetLabelSize(0.06);	
+    stuck_piminus_energy.SetLineColor(kBlack);
+    stuck_piminus_energy.SetFillStyle(3023);
+    
+    
+    //energy distribution piplus
+	TH1F crossed_piplus_mom_energy("crossed_piplus_mom_energy","Energy distribution of the  " + Tpost_vol + "-entering #pi^{+}'s mom #pi^{+}", nbinEnergy, 0, MaxEnergy);
+	TH1F crossed_piplus_energy("crossed_piplus_energy","Energy distribution of the  " + Tpost_vol + "-entering #pi^{+}", nbinEnergy, 0, MaxEnergy);
+	TH1F stuck_piplus_energy("stuck_piplus_energy","Energy distribution of the stuck #pi^{+}", nbinEnergy, 0, MaxEnergy);
+	TH1F orig_piplus_energy("orig_piplus_energy","Energy distribution of the original STT #pi^{+}", nbinEnergy, 0, MaxEnergy);
+
+	orig_piplus_energy.GetXaxis()->SetTitle("E (MeV)");
+	orig_piplus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	orig_piplus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	orig_piplus_energy.GetYaxis()->SetTitleSize(0.06);	
+	orig_piplus_energy.GetXaxis()->SetTitleSize(0.06);	
+	orig_piplus_energy.GetYaxis()->SetLabelSize(0.06);	
+	orig_piplus_energy.GetXaxis()->SetLabelSize(0.06);	
+    //orig_piplus_energy.SetFillColorAlpha(kSpring+8,0.3);
+	orig_piplus_energy.SetLineColor(kBlack);
+   
+    crossed_piplus_mom_energy.GetXaxis()->SetTitle("E (MeV)");
+	crossed_piplus_mom_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_piplus_mom_energy.GetXaxis()->SetTitleOffset(0.92);	
+	crossed_piplus_mom_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_piplus_mom_energy.GetXaxis()->SetTitleSize(0.06);	
+	crossed_piplus_mom_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_piplus_mom_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_piplus_mom_energy.SetFillColorAlpha(kSpring+8,0.3);
+	crossed_piplus_mom_energy.SetLineColor(kGreen+3);
+    
+    crossed_piplus_energy.GetXaxis()->SetTitle("E (MeV)");
+	crossed_piplus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	crossed_piplus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	crossed_piplus_energy.GetYaxis()->SetTitleSize(0.06);	
+	crossed_piplus_energy.GetXaxis()->SetTitleSize(0.06);	
+    crossed_piplus_energy.SetFillColorAlpha(kGreen+2,0.3);
+	crossed_piplus_energy.GetYaxis()->SetLabelSize(0.06);	
+	crossed_piplus_energy.GetXaxis()->SetLabelSize(0.06);	
+    crossed_piplus_energy.SetLineColor(kGreen+5);
+	
+    stuck_piplus_energy.SetFillColorAlpha(kGray+2,0.3);
+	stuck_piplus_energy.GetXaxis()->SetTitle("E (MeV)");
+	stuck_piplus_energy.GetYaxis()->SetTitleOffset(0.92);	
+	stuck_piplus_energy.GetXaxis()->SetTitleOffset(0.92);	
+	stuck_piplus_energy.GetYaxis()->SetTitleSize(0.06);	
+	stuck_piplus_energy.GetXaxis()->SetTitleSize(0.06);	
+	stuck_piplus_energy.GetYaxis()->SetLabelSize(0.06);	
+	stuck_piplus_energy.GetXaxis()->SetLabelSize(0.06);	
+    stuck_piplus_energy.SetLineColor(kBlack);
+    
+    //####################################################  PIONS END ##################################################################################################################################
+    TH1D muon_theta("muon_rtheta" ,"" ,180, 0, 360);
+    
+    printf ("\nFILE: %s\n", Fname.c_str());
+    printf("\nNumber of entries: %d", n);
+
+    MyPDG my_pdg;
+
+    std::map <int, int> stuck_particle_count, new_particle_count, crossed_particle_count, stopped_particle_count, decayed_particle_count, orig_particle_count;
+    std::map <int, int> stuck_primary_muon_count, new_primary_muon_count, crossed_primary_muon_count, stopped_primary_muon_count, decayed_primary_muon_count, orig_primary_muon_count;
+    std::map <int, int> stuck_secondary_muon_count, new_secondary_muon_count, crossed_secondary_muon_count, stopped_secondary_muon_count, decayed_secondary_muon_count, orig_secondary_muon_count;
+    std::map <int, double> crossed_particle_percentage, stuck_particle_percentage;
+    std::map <int, double> crossed_secondary_muon_percentage, stuck_secondary_muon_percentage, crossed_primary_muon_percentage, stuck_primary_muon_percentage, orig_primary_muon_percentage, orig_secondary_muon_percentage;
+	std::map <int, int> orig_particle_id, orig_particle_kid, orig_particle_mom, orig_particle_ist;    
+	std::map <int, int> new_particle_id, new_particle_kid, new_particle_mom, new_particle_ist;    
+	std::map <int, int> crossed_particle_id, crossed_particle_kid, crossed_particle_mom, crossed_particle_ist;   
+	std::map <int, int> pdg;
+
+
+    int electron_count=0, positron_count=0, mu_count = 0, amu_count = 0;
+
+	
+	//GEOMETRY DETAILS STARTS =========================================================================================================
+	double x0 = 0, y0 = -238.473, z0 = 2391.0, R0; //the z,y co-ordinates of the barrel axis, or the center of the z-y crossection (not sure about x0), R0 is the radius of main events
+    //----------------------------------------------------------
+    
+    double ext_air1_rmax = 330 + 0.5;
+    double ext_air1_rmin = 330;
+    double yoke_rmax = ext_air1_rmin;   
+    double yoke_rmin = 293; 
+    double int_air2_rmax = yoke_rmin;   
+    double int_air2_rmin = int_air2_rmax - 0.05;    
+    double int_scint_rmax = int_air2_rmin;  
+    double int_scint_rmin = int_scint_rmax - 4.9;   
+    double int_air1_rmax = int_scint_rmin;  
+    double int_air1_rmin = int_air1_rmax - 0.05;
+    double cryo_outer_rmax = int_air1_rmin;         //288   
+    double cryo_outer_rmin = int_air1_rmin - 1.5;   
+    //there's a gap here... large gap of 25.4 cm between the coil end and the outer wall start
+    double gap3_rmax = cryo_outer_rmin;
+    double gap3_rmin = 261.1;
+    double coil_rmax = gap3_rmin; 
+    double coil_rmin = coil_rmax - 1.0; 
+    double coil_shell_rmax = coil_rmin; 
+    double coil_shell_rmin = coil_shell_rmax - 1.1; //259
+    //there's another gap here... a gap of 14.5 cm between the inner wall end and the coil shell start
+    double gap2_rmax = coil_shell_rmin;
+    double gap2_rmin = 244.5;
+    double cryo_inner_rmax = gap3_rmin; 
+    double cryo_inner_rmin = cryo_inner_rmax - 1.5;
+    //there's a gap between the ecal and the cryo wall
+    double gap1_rmax = cryo_inner_rmin;
+    double gap1_rmin = 224.22;
+    double ecal_rmax = gap1_rmin;
+    double ecal_rmin = 200.0;
+    double gap0_rmax = ecal_rmin;
+    double gap0_rmin = 200.0 - 20.0;
+    double stt_rmax = gap0_rmin;  //excluding 20 cm edge of vol STT
+    //GEOMETRY DETAILS ENDS ===========================================================================================================
+
+	
+	//THE EVENT RELATED
+    double X, Y, Z; //event co-ordinates in geometry frame (original FV events)
+    double sx1, sy1, sz1; //boundary events?
+    double mx1, my1, mz1; //boundary events?
+	double sdx, sdy, sdz;	// distance of an event from the barrel axis (self)	
+	double mdx, mdy, mdz;	// distance of an event from the barrel axis (mother)	
+    double stheta, mtheta;	// angle swept out by a perpenducular dropped from the event to the barrel axis with the the z axis 
+	double srad_distance, mrad_distance; // length of the above mentioned vector, or the distance of the event from the barrel axis
+
+    double energy, mom_energy;
+    double mass, mom_mass;
+    double momentum2, mom_momentum2;
+    int piminus_pdg = -211, mu_pdg = 13, mu_nu_pdg = 14;  // as we will be using these two extensively
+    
+    std::vector <int> allPdg;
+    TParticlePDG *pdgSelf = new TParticlePDG();
+	TParticlePDG *pdgMom = new TParticlePDG();
+	
+    int self, mom;  //pdg of the particle and that of its mom
+
+    for(int i=0; i < tree->GetEntries(); i++) 
+    {
+        tree->GetEntry(i);
+		// ORIGINAL EVENT COORDINATES (NOT ROCK)
+		X = EvtVtx[0]*100.;//in centimeters
+		Z = EvtVtx[2]*100.;//in centimeters
+		Y = EvtVtx[1]*100.;//...
+        R0 = sqrt(pow(Z-z0,2)+pow(Y-y0,2));
+
+		if (!EvtCode->String().Contains("nu:14;tgt") || abs(Z) > 2569 || abs(Z) < 2214 || R0 >= stt_rmax) continue; //considering only CC events that are not inside that fake LAr on the right and not in the empty part where LAr's supposed to be
+        
+		if (print == "-P")
+        {  
+            printf ("\n");
+            printf("\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ EVENT STARTS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+            printf("\n Event code                 : %s", EvtCode->String().Data());
+            printf("\n Event x-section            : %10.5f * 1E-38* cm^2",  EvtXSec);
+            printf("\n Event kinematics x-section : %10.5f * 1E-38 * cm^2/{K^n}", EvtDXSec);
+            printf("\n Event weight               : %10.8f", EvtWght);
+            printf("\n Event vertex               : X = %8.2f cm, Y = %8.2f cm, Z = %8.2f cm [%s]", X, Y, Z, d.where_is(R0).c_str());
+            printf("\n *Particle list:");
+            printf("\n --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            printf("\n | ID  |IST| PARTICLE         (PDG)          |   MOTHER  |  DAUGHTER |       P_X     |      P_Y      |      P_Z     |       E       |    R    |              volume             |");
+            printf("\n |     |   |                                 |           |           |    (GeV/c)    |    (GeV/c)    |   (GeV/c)    |     (GeV)     |   (cm)  |                                 |");
+            printf("\n --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+        }
+		//filling event coords in detector coords (cm)
+
+        for(int ip = 0; ip < StdHepN; ip++) 
+        {
+            
+            // ROCK BOUNDARY COORDINATES (W.R.T THE ORIGINAL EVENT COORDINATES)
+            mx1 = StdHepX4[StdHepFm[ip]][0]*1.e-13; //mother coordinates w.r.t the original event vertex
+            my1 = StdHepX4[StdHepFm[ip]][1]*1.e-13; // ...
+            mz1 = StdHepX4[StdHepFm[ip]][2]*1.e-13; // ...
+            sx1 = StdHepX4[ip][0]*1.e-13;           //self coordinates w.r.t. the original event vertex
+            sy1 = StdHepX4[ip][1]*1.e-13;           //...
+            sz1 = StdHepX4[ip][2]*1.e-13;           //...
+
+            // ROCK BOUNDARY COORDINATES (W.R.T THE THE BARREL CENTER)        
+            // SELF COORDINATES
+            sdx = (Y+sy1) - x0;	       
+            //std::cout << "X/2: " << abs(sdx/2) << "\n";
+            //169 cm is the 
+            
+            sdy = (Y+sy1) - y0;	                 
+            sdz = (Z+sz1) - z0;                   
+            if (sdz < 0)
+            {
+                //std::cout << "\033[91m BACK CIRCLE SKIPPING... \033[0m" << sdz << "\n";
+                continue;
+            }
+            stheta = 180 - 180. * atan2 (sdy, sdz)/(4.*atan(1)); // moving the theta = 0 from +z to -z
+            srad_distance = sqrt(pow(sdy,2) + pow(sdz,2));		// radial distance of the self event from the axis of the barrel
+            // MOTHER COORDINATES
+            mdx = (Y+my1) - x0;	                    
+            mdy = (Y+my1) - y0;	                    
+            mdz = (Z+mz1) - z0;                    
+            mtheta = 180 - 180. * atan2 (mdy, mdz)/(4.*atan(1)); // moving the theta = 0 from +z to -z, therefore maximum events will move from ~0 to 180 deg.
+            mrad_distance = sqrt(pow(mdy,2) + pow(mdz,2));		// radial distance of the mother event from the axis of the barrel
+            
+            events_yz.Fill(sz1+Z, sy1+Y);						
+            //events_yz.Fill(sx1+X, sz1+Z, sy1+Y);						
+           
+            //printf("\nz: %-6.1f\t y: %-6.1f\t dz: %-6.1f\t dy: %-6.1f\t rad_distance: %-6.1f\t [%-20s]", z + z1, y + y1, dz, dy, rad_distance, d.where_is(srad_distance*10).c_str()); 
+            //printf("\n%-20s", d.where_is(rad_distance*10).c_str()); 
+            
+            muon_theta.Fill(stheta); 
+	
+			self = StdHepPdg[ip];
+			mom = StdHepPdg[StdHepFm[ip]];
+            
+            energy = StdHepP4[ip][3]*1000.;        
+            mom_energy = StdHepP4[StdHepFm[ip]][3]*1000.;        
+            
+            momentum2 = (pow(StdHepP4[ip][0],2) + pow(StdHepP4[ip][1],2) + pow(StdHepP4[ip][2],2))*1000000;
+            mom_momentum2 = (pow(StdHepP4[StdHepFm[ip]][0],2) + pow(StdHepP4[StdHepFm[ip]][1],2) + pow(StdHepP4[StdHepFm[ip]][2],2))*1000000;
+
+            mass = sqrt(pow(energy,2) - momentum2);
+            mom_mass = sqrt(pow(mom_energy,2) - mom_momentum2);
+
+			if(StdHepStatus[ip] == -1 && srad_distance < stt_rmax && abs(Z+sz1) < 2569 && abs(Z+sz1) > 2214)  //all particles that ever existed inside the STT (particles that are created or have reached the rock boundary have IST = +1, always           
+            {
+                if(StdHepPdg[StdHepFm[ip]] == mu_nu_pdg)    //mu_nu is mother, hence primary
+                {
+                    orig_primary_muminus_energy.Fill(energy);
+                    orig_primary_muon_count[self]++;	
+                }
+                if (StdHepPdg[StdHepFm[ip]] != mu_nu_pdg)
+                {
+                    orig_secondary_muon_count[self]++;	
+                }
+
+                if(StdHepPdg[ip] == -piminus_pdg)
+                {
+                    orig_piplus_energy.Fill(energy);
+                }
+                if(StdHepPdg[ip] == piminus_pdg)
+                {
+                    orig_piminus_energy.Fill(energy);
+                }
+                orig_particle_count[self]++;		
+            }
+
+			if (std::find(allPdg.begin(), allPdg.end(), StdHepPdg[ip]) == allPdg.end()) 
+			{
+				  allPdg.push_back(StdHepPdg[ip]);
+			}
+            if (print == "-P")
+            {   
+                printf("\n | %-3d |%+3d| %-20s%-10d  | %-3d | %-3d | %-3d | %-3d | %+.2e     | %+.2e     | %+.2e    | %-.2e      | %-7.3f  | %-30s |",
+                ip, StdHepStatus[ip],  my_pdg.GetName(StdHepPdg[ip]).c_str(), StdHepPdg[ip], 
+                StdHepFm[ip],  StdHepLm[ip], StdHepFd[ip],  StdHepLd[ip],
+                StdHepP4[ip][0], StdHepP4[ip][1], StdHepP4[ip][2], StdHepP4[ip][3],
+                srad_distance, d.where_is(srad_distance*10).c_str());
+				
+			}
+			
+            pdg[self] = StdHepPdg[ip];
+
+			if (StdHepStatus[ip] == 1 && srad_distance > stt_rmax && mrad_distance < stt_rmax && abs(Z+mz1) < 2569 && abs(Z+mz1) > 2214)  //rock events and mom from STT
+			{
+				if (print2 == "-Q")printf("\n ------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            
+				if (StdHepPdg[ip] == StdHepPdg[StdHepFm[ip]] && ip == StdHepFd[StdHepFm[ip]] && StdHepStatus[StdHepFm[ip]] == -1)
+				{
+					if (print2 == "-Q")
+					{
+						printf("\n\033[92m\t%s has crossed the %s, was produced in %s\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), d.where_is(srad_distance*10).c_str());
+					}
+                    //muon hist fill
+					if( StdHepPdg[ip] == mu_pdg)//muminus
+                    {
+                        if ( StdHepPdg[StdHepFm[StdHepFm[ip]]] == mu_nu_pdg )//mom's mom is a neutrino
+                        {
+                            crossed_primary_muminus_energy.Fill(energy);  
+                            crossed_primary_muminus_mom_energy.Fill(mom_energy);
+                            crossed_primary_muon_count[self]++;
+                        }
+                        else if (StdHepPdg[StdHepFm[StdHepFm[ip]]] != mu_nu_pdg)
+                        {
+                            crossed_secondary_muon_count[self]++;
+                        }
+                    }
+					else if(StdHepPdg[ip] == -mu_pdg) //muplus
+                    {
+                        if ( StdHepPdg[StdHepFm[StdHepFm[ip]]] != -mu_nu_pdg) //only possible source
+                        {
+                            crossed_secondary_muon_count[self]++;
+                        }
+                    }
+					
+                    //pion hist fill
+                    if(StdHepPdg[ip] == piminus_pdg)
+                    { 
+                        crossed_piminus_energy.Fill(energy);  
+                        crossed_piminus_mom_energy.Fill(mom_energy);
+                    }
+                    if(StdHepPdg[ip] == -piminus_pdg)
+                    { 
+                        crossed_piplus_energy.Fill(energy);  
+                        crossed_piplus_mom_energy.Fill(mom_energy);
+                    }
+                    //counter
+                    crossed_particle_count[self]++;
+
+				} 
+				if (StdHepPdg[ip] != StdHepPdg[StdHepFm[ip]] || (ip != StdHepFd[StdHepFm[ip]])) //self != mom particle-wise, or self = mom but self != first daughter of the mom, to ensure that it's not itself that crosses
+				{
+					if (print2 == "-Q")
+					{   
+						if(StdHepStatus[StdHepFm[ip]] == -1) // this section is not itself that crosses... but its other daughters
+						{
+							if(ip != StdHepFd[StdHepFm[ip]] && StdHepPdg[StdHepFd[StdHepFm[ip]]] == StdHepPdg[StdHepFm[ip]])printf("\n\033[38;5;193m\t%s crossed the %s originating (vol: %s) from pre-%s %s that later crossed the %s too \033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), d.where_is(srad_distance*10).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), post_vol.c_str());
+							if(ip != StdHepFd[StdHepFm[ip]] && StdHepPdg[StdHepFd[StdHepFm[ip]]] != StdHepPdg[StdHepFm[ip]])printf("\n\033[38;5;131m\t%s crossed the %s from pre-%s decayed %s (vol: %s)\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str() );
+							if(ip == StdHepFd[StdHepFm[ip]] && StdHepPdg[StdHepFd[StdHepFm[ip]]] != StdHepPdg[StdHepFm[ip]])printf("\n\033[38;5;124m\t%s crossed the %s from pre-%s decayed %s (vol: %s)\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str());
+						}
+						
+						if(StdHepStatus[StdHepFm[ip]] == 0 )printf("\n\t%s produced from a post-%s initial state %s (vol: %s)", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 2 )printf("\n\033[93m\t%s produced from a post-%s intermediate %s (vol: %s)\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 3 )printf("\n\033[91m\t%s produced from a post-%s %s decay (vol: %s)\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 11)printf("\n\033[94m\t%s produced from a post-%s nucleon target %s (vol: %s)\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), d.where_is(srad_distance*10).c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 12)printf("\n\033[96m\t%s produced from a post-%s pre-fragm. hadr. state %s has crossed the %s\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), post_vol.c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 13)printf("\n\033[38;5;208m\t%s produced from a post-%s resonant pre-decayed has crossed the %s%s\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str(), post_vol.c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 14)printf("\n\033[38;5;129m\t%s got released from inside a post-%s neclus\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str());
+						if(StdHepStatus[StdHepFm[ip]] == 15)printf("\n\033[95m\t%s a remnant neucleus coming from %s\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), my_pdg.GetName(StdHepPdg[StdHepFm[ip]]).c_str());
+					}
+                    //mu- fill
+					if(StdHepPdg[ip] == mu_pdg)
+                    { 
+                        
+                        if (StdHepPdg[StdHepFm[ip]] == mu_nu_pdg)
+                        {
+                            if(srad_distance > stt_rmax)new_primary_muon_count[self]++;
+                        }
+                        else if ( StdHepPdg[StdHepFm[ip]] != mu_nu_pdg ) 
+                        {
+                            if(srad_distance > stt_rmax)new_secondary_muon_count[self]++;
+                        }
+                    }
+                    //mu+ fill
+					else if(StdHepPdg[ip] == -mu_pdg)
+                    { 
+                        
+                        if ( StdHepPdg[StdHepFm[ip]] == -piminus_pdg )
+                        {
+                            if(srad_distance > stt_rmax)new_secondary_muon_count[self]++;
+                        }
+                    }
+					
+					//counting 
+                    if(srad_distance > stt_rmax)new_particle_count[self]++;
+				}
+				if (print2 == "-Q")printf("\n ------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			}
+			if (StdHepPdg[ip] != StdHepPdg[StdHepFd[ip]] && StdHepStatus[ip] == -1 && srad_distance < stt_rmax)
+			{
+				if (print2 == "-Q")
+				{
+                    printf("\n -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+					printf("\n\033[38;5;89m\t%s is stuck inside the %s\033[0m", my_pdg.GetName(StdHepPdg[ip]).c_str(), post_vol.c_str());
+                    printf("\n -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+				}
+                //mu- filling
+                if( StdHepPdg[ip] == mu_pdg)
+                { 
+                    //if(StdHepFd[ip] != -1 || StdHepLd[ip] != -1)std::cout << "\033[41m\nSTUCK MUON ===================================================>>>>\033[49m \n";
+                    if ( StdHepPdg[StdHepFm[ip]] == mu_nu_pdg )
+                    {
+                        stuck_primary_muminus_energy.Fill(energy);  
+                        stuck_primary_muon_count[self]++;
+                    }
+                    else if ( StdHepPdg[StdHepFm[ip]] != mu_nu_pdg )
+                    {
+                        stuck_secondary_muon_count[self]++;
+                    }
+                }
+                //mu+ filling
+                if((StdHepPdg[ip]) == -mu_pdg)
+                { 
+                    //if(StdHepFd[ip] != -1 || StdHepLd[ip] != -1)std::cout << "\033[41m\nSTUCK MUON ===================================================>>>>\033[49m \n";
+                    if ( StdHepPdg[StdHepFm[ip]] != -mu_nu_pdg )
+                    {
+                        stuck_secondary_muon_count[self]++;
+                    }
+                }
+
+                //pion filling
+                if((StdHepPdg[ip])==piminus_pdg)
+                { 
+                   stuck_piminus_energy.Fill(energy);  
+                }
+                if((StdHepPdg[ip]) == -piminus_pdg)
+                { 
+                   stuck_piplus_energy.Fill(energy);  
+                }
+                //counting 
+				stuck_particle_count[self]++;
+			}
+            //if(StdHepPdg[ip]==mu_pdg)std::cout << "Stuck primary: " << 100.0*stuck_primary_muon_count[13] / orig_primary_muon_count[13]<< "\n";
+        } 
+		if (print == "-P" )
+		{   
+            printf("\n -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+			printf("\n *Flux Info:");
+			printf("\n Parent hadron pdg code    : %d", NuParentPdg);
+			printf("\n Parent hadron decay mode  : %d", NuParentDecMode);
+			printf("\n Parent hadron 4p at decay : Px = %6.3f GeV/c, Py = %6.3f GeV/c, Pz = %6.3f GeV/c, E = %6.3f GeV", 
+					   NuParentDecP4[0], NuParentDecP4[1], NuParentDecP4[2], NuParentDecP4[3]);
+			printf("\n Parent hadron 4p at prod. : Px = %6.3f GeV/c, Py = %6.3f GeV/c, Pz = %6.3f GeV/c, E = %6.3f GeV", 
+					   NuParentProP4[0], NuParentProP4[1], NuParentProP4[2], NuParentProP4[3]);
+			printf("\n Parent hadron 4x at decay : x = %6.3f m, y = %6.3f m, z = %6.3f m, t = %6.3f s", 
+					   NuParentDecX4[0], NuParentDecX4[1], NuParentDecX4[2], NuParentDecX4[3]);
+			printf("\n Parent hadron 4x at prod. : x = %6.3f m, y = %6.3f m, z = %6.3f m, t = %6.3f s", 
+					   NuParentProX4[0], NuParentProX4[1], NuParentProX4[2], NuParentProX4[3]);
+            printf("\n ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ EVENT ENDS ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+		}
+    }
+    printf("\n");
+    file.Close();
+    if (print == "-P" )
+    {
+        //printf(" ..............................................................................................................................................");
+        printf ("\nROCK BOUNDARY: %20s \n",post_vol.c_str());
+        printf ("\n******************************************************************************");
+        printf ("\n|        PARTICLE      | CROSSED  %% OF   |  POST  |  STUCK  %% OF    |  ORIG  |");
+        printf ("\n|                      |          ORIG   |  ROCK  |         ORIG    |        |");
+        printf ("\n******************************************************************************");
+        double total_orig = 0;
+        for(size_t i = 0; i<allPdg.size(); ++i)
+        {
+            self = allPdg.at(i);
+            crossed_particle_percentage[self] = 100.*crossed_particle_count[self]/orig_particle_count[self];
+            stuck_particle_percentage[self] = 100.*stuck_particle_count[self]/orig_particle_count[self];
+            if (crossed_particle_percentage[self] != crossed_particle_percentage[self])crossed_particle_percentage[self] = 0;
+            if (stuck_particle_percentage[self] != stuck_particle_percentage[self])stuck_particle_percentage[self] = 0;
+            if ((int)(orig_particle_count[self]) > 0 || (int)(stuck_particle_count[self]) > 0 || (int)(crossed_particle_count[self]) > 0 || (int)(new_particle_count[self]) > 0)printf ("\n| %-20s | %-6d  %-5.1f%%  | %-6d | %-6d  %-5.1f%%  | %-6d |", my_pdg.GetName(allPdg.at(i)).c_str(), (int)(crossed_particle_count[self]), crossed_particle_percentage[self], (int)(new_particle_count[self]), (int)(stuck_particle_count[self]), stuck_particle_percentage[self], (int)(orig_particle_count[self]));
+        }
+        printf ("\n******************************************************************************");
+        printf("\n");
+    }
+    //printf(" ..............................................................................................................................................");
+	printf ("\n**********************************************************************************************************************************");
+	printf ("\n|       PARTICLE       | CROSSED  %% OF   | CROSSED  %% OF    |  POST  |  STUCK  %% OF    |   STUCK  %% OF    |   ORIG  |    ORIG    |");
+	printf ("\n|                      | PRIMARY  ORIG   | SECONDARY ORIG   |  ROCK  | PRIMARY ORIG    | SECONDARY ORIG   | PRIMARY |  SECONDARY |");
+	printf ("\n**********************************************************************************************************************************");
+    //double total_orig = 0;
+	for(int i : {13, -13})
+	{
+        self = i;
+        crossed_primary_muon_percentage[self] = 100.*crossed_primary_muon_count[self]/orig_primary_muon_count[self];
+        stuck_primary_muon_percentage[self] = 100.*stuck_primary_muon_count[self]/orig_primary_muon_count[self];
+        crossed_secondary_muon_percentage[self] = 100.*crossed_secondary_muon_count[self]/orig_secondary_muon_count[self];
+        stuck_secondary_muon_percentage[self] = 100.*stuck_secondary_muon_count[self]/orig_secondary_muon_count[self];
+        
+        if (stuck_primary_muon_percentage[self] != stuck_primary_muon_percentage[self])stuck_primary_muon_percentage[self] = 0;
+        if (crossed_primary_muon_percentage[self] != crossed_primary_muon_percentage[self])crossed_primary_muon_percentage[self] = 0;
+        if (stuck_secondary_muon_percentage[self] != stuck_secondary_muon_percentage[self])stuck_secondary_muon_percentage[self] = 0;
+        if (crossed_secondary_muon_percentage[self] != crossed_secondary_muon_percentage[self])crossed_secondary_muon_percentage[self] = 0;
+		
+        if ((int)(orig_primary_muon_count[self]) > 0 || (int)(stuck_primary_muon_count[self]) > 0 || (int)(crossed_primary_muon_count[self]) > 0 || (int)(new_primary_muon_count[self]) > 0)
+        {
+            printf ("\n| %-20s | %-6d  %-5.1f%%  | %-6d  %-5.1f%%   | %-6d | %-6d  %-5.1f%%  | %-6d  %-5.1f%%   | %-6d  | %-6d     |", my_pdg.GetName(self).c_str(), (int)(crossed_primary_muon_count[self]), crossed_primary_muon_percentage[self], (int)(crossed_secondary_muon_count[self]), crossed_secondary_muon_percentage[self], (int)(new_primary_muon_count[self]), (int)(stuck_primary_muon_count[self]), stuck_primary_muon_percentage[self], (int)(stuck_secondary_muon_count[self]), stuck_secondary_muon_percentage[self], (int)(orig_primary_muon_count[self]), (int)(orig_secondary_muon_count[self]));
+        }
+	}
+    //double total_orig = 0;
+	printf ("\n----------------------------------------------------------------------------------------------------------------------------------");
+	printf ("\n|                      | CROSSED  %% OF   |                  |  POST  |  STUCK  %% OF    |                  |   ORIG  |            |");
+	printf ("\n|                      |          ORIG   |                  |  ROCK  |         ORIG    |                  |         |            |");
+	printf ("\n----------------------------------------------------------------------------------------------------------------------------------");
+	for(int i : {-211, 211})
+	{
+        self = i;
+        crossed_particle_percentage[self] = 100.*crossed_particle_count[self]/orig_particle_count[self];
+        stuck_particle_percentage[self] = 100.*stuck_particle_count[self]/orig_particle_count[self];
+        
+        if (stuck_particle_percentage[self] != stuck_particle_percentage[self])stuck_particle_percentage[self] = 0;
+        if (crossed_particle_percentage[self] != crossed_particle_percentage[self])crossed_particle_percentage[self] = 0;
+		
+        if ((int)(orig_particle_count[self]) > 0 || (int)(stuck_particle_count[self]) > 0 || (int)(crossed_particle_count[self]) > 0 || (int)(new_particle_count[self]) > 0)
+        {
+            printf ("\n| %-20s | %-6d  %-5.1f%%  |   %-6s %-5s   | %-6d |  %-6d %-5.1f%%  |   %-6s %-5s   | %-6d  |   %-6s   |", my_pdg.GetName(self).c_str(), (int)(crossed_particle_count[self]), crossed_particle_percentage[self], "", "", (int)(new_particle_count[self]), (int)(stuck_particle_count[self]), stuck_particle_percentage[self], "", "", (int)orig_particle_count[self], "");
+        }
+	}
+	printf ("\n**********************************************************************************************************************************");
+	printf("\n");
+
+    printf ("\n vol                            orig prim. mu-       cros. prim. mu-    stuck. prim. mu-   orig. pi-         cros. pi-           stuck pi-           orig. pi+           cros. pi+           stuck pi+");
+    printf ("\n %-30s %-19d %-19d %-19d %-19d %-19d %-19d %-19d %-19d %-19d\n", post_vol.c_str(), orig_primary_muon_count[mu_pdg], crossed_primary_muon_count[mu_pdg], stuck_primary_muon_count[mu_pdg], orig_particle_count[piminus_pdg], crossed_particle_count[piminus_pdg], stuck_particle_count[piminus_pdg], orig_particle_count[-piminus_pdg], crossed_particle_count[-piminus_pdg], stuck_particle_count[-piminus_pdg]);
+    
+
+	if (print3 == "-D")
+	{
+		gStyle->SetOptFit(1);
+		gStyle->SetOptStat(111);
+		//linear fit function
+		TCanvas *canvas = new TCanvas("canvas","",0,0,800,800);
+		canvas->Divide(3,4);
+        TExec ex1("ex1","TGaxis::SetMaxDigits(4);");
+        ex1.Draw();
+		//style=================
+        gStyle->SetOptFit(1111);
+        gStyle->SetPalette(57);
+        gStyle->SetOptTitle(0);
+        canvas->SetHighLightColor(2);
+        canvas->Range(1787.5,-700,2912.5,300);
+        canvas->SetFillColor(0);
+        canvas->SetBorderMode(0);
+        canvas->SetBorderSize(2);
+        canvas->SetFrameBorderMode(0);
+        canvas->SetFrameLineWidth(2);
+        canvas->SetFrameBorderMode(0);
+        //=======================
+        
+        canvas->cd(1);
+        orig_primary_muminus_energy.Draw();
+        canvas->cd(4);
+        crossed_primary_muminus_mom_energy.Draw();
+        canvas->cd(7);
+		crossed_primary_muminus_energy.Draw();
+        canvas->cd(10);
+		stuck_primary_muminus_energy.Draw();
+		canvas->Update();
+		canvas->Update();
+        
+        canvas->cd(2);
+        orig_piminus_energy.Draw();
+        canvas->cd(5);
+        crossed_piminus_mom_energy.Draw();
+        canvas->cd(8);
+		crossed_piminus_energy.Draw();
+        canvas->cd(11);
+        stuck_piminus_energy.Draw();
+        
+        
+        canvas->cd(3);
+        orig_piplus_energy.Draw();
+        canvas->cd(6);
+        crossed_piplus_mom_energy.Draw();
+        canvas->cd(9);
+		crossed_piplus_energy.Draw();
+        canvas->cd(12);
+        stuck_piplus_energy.Draw();
+		canvas->Update();
+
+        
+        gStyle->SetFrameFillColor(kBlack);
+        TCanvas *caname = new TCanvas("caname", "", 0, 64, 1745, 975);
+		//canvas2.Update();
+	    caname->SetFillColor(kGray);
+        events_yz.Draw("ARR COLZ");
+        //caname->GetView()->SetLongitude(30);
+        //gPad->SetPhi(90);
+        gPad->SetTheta(45);
+        caname->Modified();
+        caname->Update();
+        std::cout << "\nDone!\n";
+		
+		
+		rack.Run();
+	}
+
+
+
+	return 0;
+}
+
+
+
+
+
+
+

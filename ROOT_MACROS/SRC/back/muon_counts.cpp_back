@@ -1,0 +1,146 @@
+//ROOT
+#include "TCanvas.h"
+#include "TRandom3.h"
+#include "TGraph.h"
+#include "TProfile.h"
+#include "TFile.h"
+#include "TApplication.h"
+#include "TROOT.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TString.h"
+#include "TMath.h"
+#include "TStyle.h"
+
+//STL
+#include <fstream>
+#include <iostream>
+
+
+//____________________________________________________________________
+//void fitCircle(std::string InFile) {
+int main(int argc, char** argv)
+{
+    if (argc < 3)
+    {
+        std::cout << "\033[91mError: path to the txt file and the number of line entries, required!!!\033[0m\n";
+        return -1;
+    }
+    //TString InFileName = argv[1];
+    std::ifstream infile(argv[1]);
+
+	TApplication circle("circle",&argc,argv);
+    int i = 0, n = std::atoi(argv[2]);
+
+    TString post_vol, s_thickness, s_mu_rock, s_muminus_rock, s_muplus_rock, s_orig_prim_muminus, s_orig_primary_muplus, s_cross_prim_muminus, s_cross_prim_muplus, s_orig_sec_muminus, s_orig_sec_muplus, s_cross_sec_muminus, s_cross_sec_muplus;
+    TString rock;
+    double thickness, mu_rock, muminus_rock, muplus_rock, orig_prim_muminus, orig_primary_muplus, cross_prim_muminus, cross_prim_muplus, orig_sec_muminus, orig_sec_muplus, cross_sec_muminus, cross_sec_muplus;
+    auto h_cross_muminus_prim = new TH1F("h_cross_muminus_prim","",n,0,n);
+    auto h_cross_muplus_prim = new TH1F("h_cross_muplus_prim","",n,0,n);
+    auto h_cross_muminus_sec = new TH1F("h_cross_muminus_sec","",n,0,n);
+    auto h_cross_muplus_sec = new TH1F("h_cross_muplus_sec","",n ,1 , n);
+    auto h_rock_muminus = new TH1F("h_rock_muminus","",n ,1 , n);
+    
+    if(infile.is_open())
+    {
+        while (!infile.eof()) 
+        {
+            //infile >> post_vol >> s_thickness >> s_mu_rock >> s_muminus_rock >> s_muplus_rock >> s_orig_prim_muminus >> s_orig_primary_muplus >> s_cross_prim_muminus >> s_cross_prim_muplus >> s_orig_sec_muminus >> s_orig_sec_muplus >> s_cross_sec_muminus >> s_cross_sec_muplus;
+            infile >> post_vol >> s_orig_prim_muminus >> s_orig_primary_muplus >> s_orig_sec_muminus >> s_orig_sec_muplus  >> s_cross_prim_muminus >> s_cross_prim_muplus >> s_cross_sec_muminus >> s_cross_sec_muplus >> s_orig_piminus >> s_orig_piplus >> s_cross_piminus >> s_cross_piminus;
+
+           thickness            = s_thickness.Atof();
+           mu_rock              = s_mu_rock.Atof();
+           muminus_rock         = s_muminus_rock.Atof();
+           muplus_rock          = s_muplus_rock.Atof();
+           orig_prim_muminus    = s_orig_prim_muminus.Atof();
+           orig_primary_muplus  = s_orig_primary_muplus.Atof();
+           cross_prim_muminus   = s_cross_prim_muminus.Atof();
+           cross_prim_muplus    = s_cross_prim_muplus.Atof();
+           orig_sec_muminus     = s_orig_sec_muminus.Atof();
+           orig_sec_muplus      = s_orig_sec_muplus.Atof();
+           cross_sec_muminus    = s_cross_sec_muminus.Atof();
+           cross_sec_muplus     = s_cross_sec_muplus.Atof();
+  
+
+           h_rock_muminus->SetBinContent(i+1,muminus_rock*100./235225);
+           h_rock_muminus->GetXaxis()->SetBinLabel(i+1, post_vol.Data());
+
+           h_cross_muminus_prim->SetBinContent(i+1,cross_prim_muminus*100./203577);
+           h_cross_muminus_prim->GetXaxis()->SetBinLabel(i+1, post_vol.Data());
+           h_cross_muminus_sec->SetBinContent(i+1, cross_sec_muminus*100./12);
+           h_cross_muminus_sec->GetXaxis()->SetBinLabel(i+1, post_vol.Data());
+           
+           h_cross_muplus_prim->SetBinContent(i+1,cross_prim_muplus*100./11594);
+           h_cross_muplus_prim->GetXaxis()->SetBinLabel(i+1, post_vol.Data());
+           h_cross_muplus_sec->SetBinContent(i+1, cross_sec_muplus*100./116);
+           h_cross_muplus_sec->GetXaxis()->SetBinLabel(i+1, post_vol.Data());
+           
+           i++;
+        }
+    }
+
+    printf ("-----------------------\n");
+    //for (Int_t i = 0; i < n-1; i++) {
+    //   h->SetBinContent(i+1,y_vals[i]);
+    //   h->GetXaxis()->SetBinLabel(i+1, x_labels[i].Data());
+    //}
+
+    //h_cross_muminus_prim->SetTitle("#mu counts vs passive layer thickness");
+    h_cross_muminus_prim->SetMarkerStyle(21);
+    h_cross_muminus_prim->SetMarkerSize(1.0);
+    h_cross_muminus_prim->SetMarkerColor(kGreen);
+    h_cross_muminus_prim->GetXaxis()->SetTitleOffset(1.5);
+    h_cross_muminus_prim->GetYaxis()->SetTitle("\% of prim. #mu^{-} entering");
+    h_cross_muminus_prim->GetXaxis()->SetTitle("volume");
+    h_cross_muminus_prim->GetYaxis()->SetTitleOffset(1.5);
+
+    //h_cross_muplus_prim->SetTitle("#mu counts vs passive layer thickness");
+    h_cross_muplus_prim->SetMarkerStyle(21);
+    h_cross_muplus_prim->SetMarkerSize(1.0);
+    h_cross_muplus_prim->SetMarkerColor(kRed);
+    h_cross_muplus_prim->GetXaxis()->SetTitleOffset(1.5);
+    h_cross_muplus_prim->GetYaxis()->SetTitle("\% of prim. #mu^{+} entering");
+    h_cross_muplus_prim->GetXaxis()->SetTitle("volume");
+    h_cross_muplus_prim->GetYaxis()->SetTitleOffset(1.5);
+
+    //h_cross_muminus_sec->SetTitle("#mu counts vs passive layer thickness");
+    h_cross_muminus_sec->SetMarkerStyle(20);
+    h_cross_muminus_sec->SetMarkerSize(1.0);
+    h_cross_muminus_sec->SetMarkerColor(kGreen+2);
+    h_cross_muminus_sec->GetXaxis()->SetTitleOffset(1.5);
+    h_cross_muminus_sec->GetYaxis()->SetTitle("\% of sec. #mu^{-} entering");
+    h_cross_muminus_sec->GetXaxis()->SetTitle("volume");
+    h_cross_muminus_sec->GetYaxis()->SetTitleOffset(1.5);
+
+    //h_cross_muplus_sec->SetTitle("#mu counts vs passive layer thickness");
+    h_cross_muplus_sec->SetMarkerStyle(20);
+    h_cross_muplus_sec->SetMarkerSize(1.0);
+    h_cross_muplus_sec->SetMarkerColor(kRed+2);
+    h_cross_muplus_sec->GetXaxis()->SetTitleOffset(1.5);
+    h_cross_muplus_sec->GetYaxis()->SetTitle("\% of sec. #mu^{+} entering");
+    h_cross_muplus_sec->GetXaxis()->SetTitle("volume");
+    h_cross_muplus_sec->GetYaxis()->SetTitleOffset(1.5);
+
+    gStyle->SetOptStat(0);
+
+    TCanvas *c1 = new TCanvas("c1","c1",900,900);
+    c1->Divide(2,2);
+    c1->cd(1);
+    gPad->SetGrid();
+    h_cross_muminus_prim->Draw("P");
+    h_cross_muplus_prim->Draw("SAME P");
+    c1->cd(2);
+    gPad->SetGrid();
+    h_cross_muminus_sec->Draw("P");
+    h_cross_muplus_sec->Draw("SAME P");
+    c1->cd(3);
+    gPad->SetGrid();
+    h_rock_muminus->Draw("P");
+    c1->cd(4);
+    gPad->SetGrid();
+    
+    
+    
+    circle.Run(); 
+    return 0;
+}

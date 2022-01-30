@@ -1,0 +1,28 @@
+#!/bin/bash 
+
+infile="$1"
+
+if [[ ${#infile} == 0 ]] 
+then
+    echo ""
+    echo -e "\e[91m    Error: you haven't provided any input file!\e[39m" 
+    echo ""
+else
+    if [[ "${infile: -4}" == "gdml" ]]
+    then
+        if [[ -f "${infile}" ]]
+        then
+            echo ""
+            geodisplay_gdml "${infile}"
+            echo ""
+        else
+            echo ""
+            echo -e "\e[91m    Error: File: ${infile} does not exist in the provided path!\e[39m" 
+            echo ""
+        fi
+    else
+        echo ""
+        echo -e "\e[91m    Error: you haven't provided any *.gdml input file!\e[39m" 
+        echo ""
+    fi
+fi
