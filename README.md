@@ -28,13 +28,8 @@ To do a quick check or your geometry file you can use ROOT-CERN:
 ```
 
 ![something](GRAPHICS/emi.png)
+![ScreenShot](https://github.com/quantatanu/SAND_EMI_GEOMETRY/master/GRAPHICS/emi.png)
 
-
-
-
-<div>
-    <img src="/GRAPHICS/emi.png" width="220" height="240" />
-</div>
 
 
 
