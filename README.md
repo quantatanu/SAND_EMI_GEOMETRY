@@ -27,7 +27,9 @@ To do a quick check or your geometry file you can use ROOT-CERN:
 ./ROOT_MACROS/BIN/geodisplay_gdml 'example.gdml'
 ```
 
-![emi](https://raw.githubusercontent.com/SAND_EMI_GEOMETRY/master/.github/GRAPHICS/emi.png)
+<div style='float: center'>
+  <img style='width: 600px' src="GRAPHICS/emi.png"></img>
+</div>
 
 
 
