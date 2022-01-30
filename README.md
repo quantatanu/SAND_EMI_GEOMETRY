@@ -27,7 +27,7 @@ To do a quick check or your geometry file you can use ROOT-CERN:
 ./ROOT_MACROS/BIN/geodisplay_gdml 'example.gdml'
 ```
 
-![something](/GRAPHICS/emi.png)
+![something](GRAPHICS/emi.png)
 
 
 
