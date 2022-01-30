@@ -33,7 +33,7 @@ To do a quick check or your geometry file you can use ROOT-CERN:
 
 
 <div>
-    <img src="GRAPHICS/emi.png" width="220" height="240" />
+    <img src="/GRAPHICS/emi.png" width="220" height="240" />
 </div>
 
 
