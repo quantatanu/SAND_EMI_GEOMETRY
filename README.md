@@ -28,7 +28,7 @@ To do a quick check or your geometry file you can use ROOT-CERN:
 ```
 
 <div style='float: center'>
-  <img style='width: 600px' src="GRAPHICS/emi.png"></img>
+  <img style='width: 600px' src="/GRAPHICS/emi.png"></img>
 </div>
 
 
