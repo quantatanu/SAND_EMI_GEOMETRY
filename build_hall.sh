@@ -35,9 +35,9 @@ fi
 # SAND OPT 3RPC
 if [ $option = "opt3RPC" ];
 then
-gegede-cli duneggd/Config/JUST_EMI/WORLDggd.cfg \
-           duneggd/Config/JUST_EMI/ND_Hall_Air_Volume.cfg \
-           duneggd/Config/JUST_EMI/ND_Hall_Rock.cfg \
+gegede-cli duneggd/Config/WORLDggd.cfg \
+           duneggd/Config/ND_Hall_Air_Volume.cfg \
+           duneggd/Config/ND_Hall_Rock.cfg \
            duneggd/Config/SAND_MAGNET.cfg \
            duneggd/Config/SAND_ECAL.cfg \
            duneggd/Config/SAND_EMI_RPC.cfg \
