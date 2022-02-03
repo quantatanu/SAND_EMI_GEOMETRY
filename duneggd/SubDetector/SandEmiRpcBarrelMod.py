@@ -10,41 +10,44 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
     def configure(self, 
 		  trapezoidDim=None, 
-		  GasSlabThickness=None, 
+		  GasThickness=None, 
 		  GasMat=None, 
-		  BakeliteSlabThickness=None, 
+		  BakeliteThickness=None, 
 		  BakeliteMat=None, 
-		  CoatSlabThickness=None, 
+		  CoatThickness=None, 
 		  CoatMat=None, 
-		  PlateSlabThickness=None, 
-		  PlateSlabWidth=None, 
-		  PlateMat=None, 
-		  nSlabs=None, 
+		  StripThickness=None, 
+		  StripWidth=None, 
+		  StripMat=None, 
+		  nModules=None, 
 		  **kwds):
         self.trapezoidDim = trapezoidDim
         self.BakeliteMat = BakeliteMat
-        self.BakeliteSlabThickness = BakeliteSlabThickness
-        self.GasSlabThickness = GasSlabThickness
+        self.BakeliteThickness = BakeliteThickness
+        self.GasThickness = GasThickness
         self.GasMat = GasMat
-        self.CoatSlabThickness = CoatSlabThickness
+        self.CoatThickness = CoatThickness
         self.CoatMat = CoatMat
-        self.PlateSlabWidth = PlateSlabWidth
-        self.PlateSlabThickness = PlateSlabThickness
-        self.PlateMat = PlateMat
-        self.nSlabs = nSlabs
+        self.StripWidth = StripWidth
+        self.StripThickness = StripThickness
+        self.StripMat = StripMat
+        self.nModules = nModules
+        self.nSlabs = 3
         self.Segmentation = 24.
         self.tan = math.tan(math.pi/self.Segmentation)
-        #self.tan = math.tan(math.pi/self.Segmentation)
-        #self.tan = 0.5*(self.trapezoidDim[1] - self.trapezoidDim[0])/self.trapezoidDim[3]
-        #self.tan = 0.5*(self.trapezoidDim[1] - self.trapezoidDim[0])/self.trapezoidDim[3]
+        self.nStrips = int((trapezoidDim[0].magnitude)/(StripThickness.magnitude))
+
+        
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
     def construct(self, geom):
         print("\033[36mconstruct in \033[1mSandEmiRpcBarrelModBuilder\033[m\033[m")
-        print( "CoatSlabThickness:------------> ", self.CoatSlabThickness)
-        print( "PlateSlabThickness:------------> ", self.PlateSlabThickness)
-        print( "PlateSlabWidth:------------> ", self.PlateSlabWidth)
-        print( "GasSlabThickness:------------> ", self.GasSlabThickness)
-        print( "BakeliteSlabThickness:---------> ", self.BakeliteSlabThickness)
+        print( "CoatThickness:------------> ", self.CoatThickness)
+        print( "StripThickness:------------> ", self.StripThickness)
+        print( "StripWidth:------------> ", self.StripWidth)
+        print( "GasThickness:------------> ", self.GasThickness)
+        print( "BakeliteThickness:---------> ", self.BakeliteThickness)
+        print( "nStrips:-------------------> ", self.nStrips)
+
 
         EMIRPC_shape = geom.shapes.Trapezoid('EMIRPC_shape', 
 					   dx1=self.trapezoidDim[0], 
@@ -56,191 +59,208 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         EMIRPC_lv = geom.structure.Volume('EMIRPC_lv', material='Air', shape=EMIRPC_shape)
         self.add_volume(EMIRPC_lv)
         print(self.name)
-#       EMIRPC_position = geom.structure.Position('EMIRPC_position', Position[0], Position[1], Position[2])
-#       EMIRPC_place = geom.structure.Placement('EMIRPC_place', volume = EMIRPC_lv, pos=EMIRPC_position)
          
+        xpos=Q('0cm')
+        ypos=Q('0cm')
+        zposCoat0  = (-self.trapezoidDim[3] + 0.5*self.CoatThickness)
+        zposBakelite0 = -self.trapezoidDim[3] + self.CoatThickness +  .5*self.BakeliteThickness 
+        zposBakelite1 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + self.GasThickness + .5*self.BakeliteThickness 
+        zposStrip0 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + 0.5*self.StripThickness
+        zposBakelite2 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.StripThickness + .5*self.BakeliteThickness
+        zposBakelite3 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.StripThickness + self.BakeliteThickness + self.GasThickness + .5*self.BakeliteThickness
+        zposGas0 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + 0.5*self.GasThickness
+        zposGas1 = -self.trapezoidDim[3] + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.StripThickness + + self.BakeliteThickness + + 0.5*self.GasThickness
+        zposCoat1  = (-self.trapezoidDim[3]+ self.CoatThickness + self.StripThickness + self.nSlabs * self.BakeliteThickness + (self.nSlabs - 1) * self.GasThickness + 0.5*self.CoatThickness)
+        #FIRST COAT LAYER
+        # Coat 0 starts --------------------
+        aEMIRPCCoat_0 = geom.shapes.Trapezoid('EMIRPCCoat_0', 
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
+                                                dy1=self.trapezoidDim[2], 
+                                                dy2=self.trapezoidDim[2], 
+                                                dz=0.5*self.CoatThickness)
+        aEMIRPCCoat_0_lv = geom.structure.Volume('volEMIRPCCoat_0', 
+                                                material=self.CoatMat, 
+                                                shape=aEMIRPCCoat_0)
+        #aEMIRPCCoat_lv.params.append(("SensDet","EMIRPCSci"))
+        aEMIRPCCoat_0Pos = geom.structure.Position('emicoat_0pos',
+                                                xpos,
+                                                ypos,
+                                                zposCoat0)
+        aEMIRPCCoat_0Place = geom.structure.Placement('emicoat_0pla',
+                                                volume = aEMIRPCCoat_0_lv,
+                                                pos = aEMIRPCCoat_0Pos)
+        EMIRPC_lv.placements.append( aEMIRPCCoat_0Place.name )
         
-        for i in range(self.nSlabs): #nSlabs
+        # FIRST BAKELITE LAYER
+        print('Bakelite [0/3]')
+        aEMIRPCBakelite_0 = geom.shapes.Trapezoid('EMIRPCBakelite_0', 
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
+                                                dy1=self.trapezoidDim[2], 
+                                                dy2=self.trapezoidDim[2], 
+                                                dz=0.5*self.BakeliteThickness)
+
+        aEMIRPCBakelite_0_lv = geom.structure.Volume('volEMIRPCBakelite_0', 
+                                                material=self.BakeliteMat, 
+                                                shape=aEMIRPCBakelite_0)
+        #aEMIRPCBakelite0_lv.params.append(("SensDet","EMIRPCSci"))
+        
+        aEMIRPCBakelite_0Pos = geom.structure.Position('emibakelite_0labpos',
+                                                xpos,
+                                                ypos,
+                                                zposBakelite0)
+
+        aEMIRPCBakelite_0Place = geom.structure.Placement('emibakelitepla_0',
+                                                volume = aEMIRPCBakelite_0_lv,
+                                                pos = aEMIRPCBakelite_0Pos)
+
+        EMIRPC_lv.placements.append( aEMIRPCBakelite_0Place.name )
+        
+        # FIRST GAS LAYER
+        print('Gas [0/2]')
+        aEMIRPCGas_0 = geom.shapes.Trapezoid('EMIRPCGas_0', 
+                                                 dx1=self.trapezoidDim[1], 
+                                                 dx2=self.trapezoidDim[1],
+                                                 dy1=self.trapezoidDim[2], 
+                                                 dy2=self.trapezoidDim[2], 
+                                                 dz=0.5*self.GasThickness)
+
+        aEMIRPCGas_0_lv = geom.structure.Volume('volEMIRPCGas_0', 
+                                                 material=self.GasMat, 
+                                                 shape=aEMIRPCGas_0)
+        
+        aEMIRPCGas_0_lv.params.append(("SensDet","EMISci"))
+        aEMIRPCGas_0Pos = geom.structure.Position('emigass_0pos',
+                                                 xpos,
+                                                 ypos,
+                                                 zposGas0)
+        
+        aEMIRPCGas_0Place = geom.structure.Placement('emigas_0pla',
+                                                 volume = aEMIRPCGas_0_lv,
+                                                 pos = aEMIRPCGas_0Pos) 
        
-            #rotation = geom.structure.Rotation(
-            #    'rotation' + '_' + str(i), Q('0deg'),Q('-15deg'),Q('0deg'))  #Rotating the module on its axis accordingly
-            
-            xposSlab=Q('0cm')
-            yposSlab=Q('0cm')
 
-            if i == 0:
-                zposSlabPlate0 = (-self.trapezoidDim[3] + 0.5*self.PlateSlabThickness)
-                zposSlabCoat0 = (-self.trapezoidDim[3] + self.PlateSlabThickness + 0.5*self.CoatSlabThickness)
-                bhalfPlate0=self.trapezoidDim[0]
-                BhalfPlate0=bhalfPlate0+self.PlateSlabThickness*self.tan
-                bhalfCoat0=BhalfPlate0
-                BhalfCoat0=bhalfCoat0+(self.CoatSlabThickness*self.tan)
-                # Plate 0 starts -------------------
-                xposPlate0 = -self.trapezoidDim[1] - 0.5 * self.PlateSlabWidth
-                for j in range(18):  # 2 cm wide strips cover the whole 46 cm breadth if we place every 2.5 times their width
-                    xposPlate0 = xposPlate0 + 2.5 * self.PlateSlabWidth
-                    print("xposPlate:::::::::::::::::::: ", xposPlate0)
-                    aEMIRPCPlate0Slab = geom.shapes.Trapezoid('EMIRPCPlate0Slab'+'_'+str(i)+'_'+str(j), 
-                                                            dx1=self.PlateSlabWidth, 
-                                                            dx2=self.PlateSlabWidth,
-                                                            dy1=self.trapezoidDim[2], 
-                                                            dy2=self.trapezoidDim[2], 
-                                                            dz=0.5*self.PlateSlabThickness)
-                    aEMIRPCPlate0Slab_lv = geom.structure.Volume('volEMIRPCPlate0Slab'+'_'+str(i)+'_'+str(j), 
-                                                               material=self.PlateMat, 
-                                                               shape=aEMIRPCPlate0Slab)
-                    #aEMIRPCPlateSlab_lv.params.append(("SensDet","EMIRPCSci"))
-                    aEMIRPCPlate0SlabPos = geom.structure.Position('emiplate0slabpos'+'_'+str(i)+'_'+str(j),
-                                                                 xposPlate0,
-                                                                 yposSlab,
-                                                                 zposSlabPlate0)
-                    aEMIRPCPlate0SlabPlace = geom.structure.Placement('emiplate0slabpla'+'_'+str(i)+'_'+str(j),
-                                                                    volume = aEMIRPCPlate0Slab_lv,
-                                                                    pos = aEMIRPCPlate0SlabPos)
-                    EMIRPC_lv.placements.append( aEMIRPCPlate0SlabPlace.name )
-                # Plate 0 ends  --------------------
-                # Coat 0 starts --------------------
-                aEMIRPCCoat0Slab = geom.shapes.Trapezoid('EMIRPCCoat0Slab'+'_'+str(i), 
-                                                        dx1=self.trapezoidDim[1], 
-                                                        dx2=self.trapezoidDim[1],
-                                                        dy1=self.trapezoidDim[2], 
-                                                        dy2=self.trapezoidDim[2], 
-                                                        dz=0.5*self.CoatSlabThickness)
-                aEMIRPCCoat0Slab_lv = geom.structure.Volume('volEMIRPCCoat0Slab'+'_'+str(i), 
-                                                           material=self.CoatMat, 
-                                                           shape=aEMIRPCCoat0Slab)
-                #aEMIRPCCoatSlab_lv.params.append(("SensDet","EMIRPCSci"))
-                aEMIRPCCoat0SlabPos = geom.structure.Position('emicoat0slabpos'+'_'+str(i),
-                                                             xposSlab,
-                                                             yposSlab,
-                                                             zposSlabCoat0)
-                aEMIRPCCoat0SlabPlace = geom.structure.Placement('emicoat0slabpla'+'_'+str(i),
-                                                                volume = aEMIRPCCoat0Slab_lv,
-                                                                pos = aEMIRPCCoat0SlabPos)
-                EMIRPC_lv.placements.append( aEMIRPCCoat0SlabPlace.name )
-                # Coat 0 end  ----------------------
+        EMIRPC_lv.placements.append( aEMIRPCGas_0Place.name )
 
+        xposStrip0 = -self.trapezoidDim[1] - 0.5 * self.StripWidth
+        # FIRST STRIP LAYER
+        #for j in range(18):  # 2 cm wide strips cover the whole 46 cm breadth if we place every 2.5 times their width
+        for j in range(self.nStrips):  # 2 cm wide strips cover the whole 46 cm breadth if we place every 2.5 times their width
+            #xposStrip0 = xposStrip0 + 2.5 * self.StripWidth
+            xposStrip0 = xposStrip0 + self.StripWidth
+            print("xposStrip:::::::::::::::::::: ", xposStrip0)
+            aEMIRPCStrip_0 = geom.shapes.Trapezoid('EMIRPCStrip_0'+'_'+str(j), 
+                                                    dx1=self.StripWidth, 
+                                                    dx2=self.StripWidth,
+                                                    dy1=self.trapezoidDim[2], 
+                                                    dy2=self.trapezoidDim[2], 
+                                                    dz=0.5*self.StripThickness)
+            aEMIRPCStrip_0_lv = geom.structure.Volume('volEMIRPCStrip_0'+'_'+str(j), 
+                                                    material=self.StripMat, 
+                                                    shape=aEMIRPCStrip_0)
+            #aEMIRPCStrip_lv.params.append(("SensDet","EMIRPCSci"))
+            aEMIRPCStrip_0Pos = geom.structure.Position('emistrip_0pos'+'_'+str(j),
+                                                    xposStrip0,
+                                                    ypos,
+                                                    zposStrip0)
+            aEMIRPCStrip_0Place = geom.structure.Placement('emistrip_0pla'+'_'+str(j),
+                                                    volume = aEMIRPCStrip_0_lv,
+                                                    pos = aEMIRPCStrip_0Pos)
+            EMIRPC_lv.placements.append( aEMIRPCStrip_0Place.name )
 
-            if i == 1:
-                zposSlabCoat1  = (-self.trapezoidDim[3] + self.PlateSlabThickness + self.CoatSlabThickness + self.BakeliteSlabThickness + self.GasSlabThickness + self.BakeliteSlabThickness + 0.5*self.CoatSlabThickness)
-                zposSlabPlate1 = (-self.trapezoidDim[3] + self.PlateSlabThickness + self.CoatSlabThickness + self.BakeliteSlabThickness + self.GasSlabThickness + self.BakeliteSlabThickness + self.CoatSlabThickness + 0.5*self.PlateSlabThickness)
-                BhalfPlate1=self.trapezoidDim[1]
-                bhalfPlate1=BhalfPlate1-self.PlateSlabThickness*self.tan
-                BhalfCoat1=bhalfPlate1
-                bhalfCoat1=BhalfCoat1-self.CoatSlabThickness*self.tan
-                # Plate 1 starts -------------------
-                xposPlate1 = -self.trapezoidDim[1] - 0.5 * self.PlateSlabWidth
-                for j in range(18):  # 2 cm wide strips cover the whole 46 cm breadth if we place every 2.5 times their width
-                    xposPlate1 = xposPlate1 + 2.5 * self.PlateSlabWidth
-                    print("xposPlate:::::::::::::::::::: ", xposPlate1)
-                    aEMIRPCPlate1Slab = geom.shapes.Trapezoid('EMIRPCPlate1Slab'+'_'+str(i)+'_'+str(j), 
-                                                            dx1=self.PlateSlabWidth, 
-                                                            dx2=self.PlateSlabWidth,
-                                                            dy1=self.trapezoidDim[2], 
-                                                            dy2=self.trapezoidDim[2], 
-                                                            dz=0.5*self.PlateSlabThickness)
-                    aEMIRPCPlate1Slab_lv = geom.structure.Volume('volEMIRPCPlate1Slab'+'_'+str(i)+'_'+str(j), 
-                                                               material=self.PlateMat, 
-                                                               shape=aEMIRPCPlate1Slab)
-                    #aEMIRPCPlateSlab_lv.params.append(("SensDet","EMIRPCSci"))
-                    aEMIRPCPlate1SlabPos = geom.structure.Position('emiplate1slabpos'+'_'+str(i)+'_'+str(j),
-                                                                 xposPlate1,
-                                                                 yposSlab,
-                                                                 zposSlabPlate1)
-                    aEMIRPCPlate1SlabPlace = geom.structure.Placement('emiplate1slabpla'+'_'+str(i)+'_'+str(j),
-                                                                    volume = aEMIRPCPlate1Slab_lv,
-                                                                    pos = aEMIRPCPlate1SlabPos)
-                    EMIRPC_lv.placements.append( aEMIRPCPlate1SlabPlace.name )
-                # Plate 1 ends  --------------------
-                # Coat 1 starts -------------------
-                aEMIRPCCoat1Slab = geom.shapes.Trapezoid('EMIRPCCoat1Slab'+'_'+str(i), 
-                                                        dx1=self.trapezoidDim[1], 
-                                                        dx2=self.trapezoidDim[1],
-                                                        dy1=self.trapezoidDim[2], 
-                                                        dy2=self.trapezoidDim[2], 
-                                                        dz=0.5*self.CoatSlabThickness)
-                aEMIRPCCoat1Slab_lv = geom.structure.Volume('volEMIRPCCoat1Slab'+'_'+str(i), 
-                                                           material=self.CoatMat, 
-                                                           shape=aEMIRPCCoat1Slab)
-                #aEMIRPCCoatSlab_lv.params.append(("SensDet","EMIRPCSci"))
-                aEMIRPCCoat1SlabPos = geom.structure.Position('emicoat1slabpos'+'_'+str(i),
-                                                             xposSlab,
-                                                             yposSlab,
-                                                             zposSlabCoat1)
-                aEMIRPCCoat1SlabPlace = geom.structure.Placement('emicoat1slabpla'+'_'+str(i),
-                                                                volume = aEMIRPCCoat1Slab_lv,
-                                                                pos = aEMIRPCCoat1SlabPos)
-                EMIRPC_lv.placements.append( aEMIRPCCoat1SlabPlace.name )
-                # Coat 1 ends  --------------------
+        # SECOND BAKELITE LAYER
+        print('Bakelite [2/3]')
+        aEMIRPCBakelite_1 = geom.shapes.Trapezoid('EMIRPCBakelite_1', 
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
+                                                dy1=self.trapezoidDim[2], 
+                                                dy2=self.trapezoidDim[2], 
+                                                dz=0.5*self.BakeliteThickness)
 
+        aEMIRPCBakelite_1_lv = geom.structure.Volume('volEMIRPCBakelite_1', 
+                                                material=self.BakeliteMat, 
+                                                shape=aEMIRPCBakelite_1)
+        #aEMIRPCBakelite0_lv.params.append(("SensDet","EMIRPCSci"))
+        
+        aEMIRPCBakelite_1Pos = geom.structure.Position('emibakelite_1pos_',
+                                                xpos,
+                                                ypos,
+                                                zposBakelite1)
 
-            zposSlabBakelite = (-self.trapezoidDim[3] + self.PlateSlabThickness + self.CoatSlabThickness +  
-		             (i+0.5)*self.BakeliteSlabThickness + 
-                             i*self.GasSlabThickness)
-            #print("glass slab position= "+ str(zposSlabBakelite))
-            zposSlabGas = (-self.trapezoidDim[3] + self.PlateSlabThickness + self.CoatSlabThickness + 
-                              (i+1.)*self.BakeliteSlabThickness + 
-                              (i+0.5)*self.GasSlabThickness)
-            #print("gas slab position= "+ str(zposSlabGas))
-            bhalfBakelite=(self.trapezoidDim[0]+
-                        i*(self.BakeliteSlabThickness*self.tan)+
-                        i*(self.GasSlabThickness*self.tan))
-            bhalfGas=bhalfBakelite+(self.BakeliteSlabThickness*self.tan)
-            BhalfBakelite=bhalfBakelite+self.BakeliteSlabThickness*self.tan
-            BhalfGas=BhalfBakelite+(self.GasSlabThickness*self.tan)
-            #print("BhalfGas= "+ str(BhalfGas))
-            
-            #creating and appending glass slabs to the EMIRPC module
-            print('Bakelite slab[',i,'/',self.nSlabs,']')
-            
-            aEMIRPCBakeliteSlab = geom.shapes.Trapezoid('EMIRPCBakeliteSlab'+'_'+str(i), 
-						    dx1=self.trapezoidDim[1], 
-						    dx2=self.trapezoidDim[1],
-						    dy1=self.trapezoidDim[2], 
-						    dy2=self.trapezoidDim[2], 
-						    dz=0.5*self.BakeliteSlabThickness)
+        aEMIRPCBakelite_1Place = geom.structure.Placement('emibakelitepla_1',
+                                                volume = aEMIRPCBakelite_0_lv,
+                                                pos = aEMIRPCBakelite_1Pos)
 
-            aEMIRPCBakeliteSlab_lv = geom.structure.Volume('volEMIRPCBakeliteSlab'+'_'+str(i), 
-						       material=self.BakeliteMat, 
-						       shape=aEMIRPCBakeliteSlab)
-            aEMIRPCBakeliteSlab_lv.params.append(("SensDet","EMIRPCSci"))
-            
-            aEMIRPCBakeliteSlabPos = geom.structure.Position('emiglassslabpos'+'_'+str(i),
-							 xposSlab,
-							 yposSlab,
-							 zposSlabBakelite)
-           
+        EMIRPC_lv.placements.append( aEMIRPCBakelite_1Place.name )
 
-            aEMIRPCBakeliteSlabPlace = geom.structure.Placement('emiglassslabpla'+'_'+str(i),
-							    volume = aEMIRPCBakeliteSlab_lv,
-							    pos = aEMIRPCBakeliteSlabPos)
+        # SECOND GAS LAYER
+        print('Gas [1/2]')
+        aEMIRPCGas_1 = geom.shapes.Trapezoid('EMIRPCGas_1', 
+                                                 dx1=self.trapezoidDim[1], 
+                                                 dx2=self.trapezoidDim[1],
+                                                 dy1=self.trapezoidDim[2], 
+                                                 dy2=self.trapezoidDim[2], 
+                                                 dz=0.5*self.GasThickness)
 
-            EMIRPC_lv.placements.append( aEMIRPCBakeliteSlabPlace.name )
-            
-            #creating and appending gas slabs to the EMIRPC module
-            if i < self.nSlabs - 1:
-                print('Gas slab[',i,'/',self.nSlabs,']')
-                aEMIRPCGasSlab = geom.shapes.Trapezoid('EMIRPCGasSlab'+'_'+str(i), 
-                                                         dx1=self.trapezoidDim[1], 
-                                                         dx2=self.trapezoidDim[1],
-                                                         dy1=self.trapezoidDim[2], 
-                                                         dy2=self.trapezoidDim[2], 
-                                                         dz=0.5*self.GasSlabThickness)
+        aEMIRPCGas_1_lv = geom.structure.Volume('volEMIRPCGas_1', 
+                                                 material=self.GasMat, 
+                                                 shape=aEMIRPCGas_0)
+        
+        aEMIRPCGas_1_lv.params.append(("SensDet","EMISci"))
+        aEMIRPCGas_1Pos = geom.structure.Position('emigaspos_1',
+                                                 xpos,
+                                                 ypos,
+                                                 zposGas1)
+        
+        aEMIRPCGas_1Place = geom.structure.Placement('emigaspla_1',
+                                                 volume = aEMIRPCGas_1_lv,
+                                                 pos = aEMIRPCGas_1Pos) 
+       
 
-                aEMIRPCGasSlab_lv = geom.structure.Volume('volEMIRPCGasSlab'+'_'+str(i), 
-                                                            material=self.GasMat, 
-                                                            shape=aEMIRPCGasSlab)
-                
-                aEMIRPCGasSlab_lv.params.append(("SensDet","EMISci"))
-                aEMIRPCGasSlabPos = geom.structure.Position('emigasslabpos'+'_'+str(i),
-                                                              xposSlab,
-                                                              yposSlab,
-                                                              zposSlabGas)
-                
-                aEMIRPCGasSlabPlace = geom.structure.Placement('emigasslabpla'+'_'+str(i),
-                                                                 volume = aEMIRPCGasSlab_lv,
-                                                                 pos = aEMIRPCGasSlabPos) 
-               
+        EMIRPC_lv.placements.append( aEMIRPCGas_1Place.name )
 
-                EMIRPC_lv.placements.append( aEMIRPCGasSlabPlace.name )
+        # THIRD BAKELITE LAYER
+        print('Bakelite [2/3]')
+        aEMIRPCBakelite_2 = geom.shapes.Trapezoid('EMIRPCBakelite_2', 
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
+                                                dy1=self.trapezoidDim[2], 
+                                                dy2=self.trapezoidDim[2], 
+                                                dz=0.5*self.BakeliteThickness)
 
+        aEMIRPCBakelite_2_lv = geom.structure.Volume('volEMIRPCBakelite_2', 
+                                                material=self.BakeliteMat, 
+                                                shape=aEMIRPCBakelite_2)
+        #aEMIRPCBakelite0_lv.params.append(("SensDet","EMIRPCSci"))
+        
+        aEMIRPCBakelite_2Pos = geom.structure.Position('emibakelite_2pos',
+                                                xpos,
+                                                ypos,
+                                                zposBakelite2)
+
+        aEMIRPCBakelite_2Place = geom.structure.Placement('emibakelite_2pla',
+                                                volume = aEMIRPCBakelite_2_lv,
+                                                pos = aEMIRPCBakelite_2Pos)
+
+        EMIRPC_lv.placements.append( aEMIRPCBakelite_2Place.name )
+
+        # SECOND COAT LAYER
+        aEMIRPCCoat_1 = geom.shapes.Trapezoid('EMIRPCCoat_1', 
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
+                                                dy1=self.trapezoidDim[2], 
+                                                dy2=self.trapezoidDim[2], 
+                                                dz=0.5*self.CoatThickness)
+        aEMIRPCCoat_1_lv = geom.structure.Volume('volEMIRPCCoat_1', 
+                                                material=self.CoatMat, 
+                                                shape=aEMIRPCCoat_1)
+        #aEMIRPCCoat_lv.params.append(("SensDet","EMIRPCSci"))
+        aEMIRPCCoat_1Pos = geom.structure.Position('emicoat_1pos',
+                                                xpos,
+                                                ypos,
+                                                zposCoat1)
+        aEMIRPCCoat_1Place = geom.structure.Placement('emicoat_1pla',
+                                                volume = aEMIRPCCoat_1_lv,
+                                                pos = aEMIRPCCoat_1Pos)
+        EMIRPC_lv.placements.append( aEMIRPCCoat_1Place.name )

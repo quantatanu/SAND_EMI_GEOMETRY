@@ -42,7 +42,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                                                     numsides=self.NEmiRpcModBarrel, 
                                                     rmin=self.BarrelRmin, 
                                                     rmax=self.BarrelRmin + 
-                                                    self.emiThickness, 
+                                                    2*self.emiThickness, # 2-ice because two layers put staggered 
                                                     dz=self.BarrelDZ,
                                                     sphi=Q(self.ang))
         #'''
@@ -82,15 +82,12 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
             axisy = (0, 1, 0)
             axisz = (1, 0, 0)
             ang = 360 / self.NEmiRpcModBarrel
-            #ang = 360 / 24
             theta = j * ang
             ModPosition = [Q('0mm'), Q('0mm'), self.BarrelRmin + 0.5*self.emiThickness]
             if j % 2 != 0: 
                 ModPosition = [Q('0mm'), Q('0mm'), self.BarrelRmin + self.emiThickness + 0.5*self.emiThickness]
             #ModPosition = [Q('0mm'), Q('0 mm'),self.BarrelRmin + 0.5*self.emiThickness+Q('233 mm')]
-#            ModPosition = [Q('0mm'), Q('0mm'), self.BarrelRmin + 0.5*(self.barrel_thickness)]   # for a cylindrical-shaped emi_lv
-#            ModPosition = [Q('0mm'), Q('0mm'), self.BarrelRmin + 1.0*(self.barrel_thickness)]   # for a cylindrical-shaped emi_lv
-            #ModPosition = [Q('0mm'), Q('0mm'), 0.5*self.emiThickness+(self.BarrelRmin + self.emiThickness)/math.cos(math.pi/self.NEmiRpcModBarrel)]
+            #ModPosition = [Q('0mm'), Q('0mm'), self.BarrelRmin + 1.0*(self.barrel_thickness)]   # for a cylindrical-shaped emi_lv
             ModPositionNew = ltools.rotation(
                 axisy, theta, ModPosition
             )  #Rotating the position vector (the slabs will be rotated automatically after append)
@@ -100,7 +97,6 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
             EMIRPC_position = geom.structure.Position(
                 'EMIRPC_position' + '_' + str(j), ModPositionNew[0],
                 ModPositionNew[1], ModPositionNew[2])
-
 
             
             EMIRPC_rotation = geom.structure.Rotation(
@@ -120,7 +116,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                                                   )
             main_lv.placements.append(EMIRPC_place.name)
         #'''
-        ''' testing
+        ''' testing for a single module building
         axisx = (0, 0, 1)
         axisy = (0, 1, 0)
         axisz = (1, 0, 0)
