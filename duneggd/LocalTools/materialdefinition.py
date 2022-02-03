@@ -275,10 +275,10 @@ def define_materials( g ):
     SF6     = g.matter.Molecule( "SF6",      density="6.17*g/L",
                             elements=( ("sulfur",4), ("fluorine",6)  ))
 
-       # use argon density at stp for now. has very little effect.
+    # use argon density at stp for now. has very little effect.
     rpcGas   = g.matter.Mixture( "rpcGas", density = "1.784*g/L",
                             components = (
-                                    ("argon",   0.75),
+                                    ("aron",   0.75),
                                     ("CH2FCF3", 0.20),
                                     ("C4H10",   0.04),
                                     ("SF6",     0.01)

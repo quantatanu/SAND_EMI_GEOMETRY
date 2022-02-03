@@ -22,9 +22,12 @@ class SandEmiBarrelModBuilder(gegede.builder.Builder):
         self.PasSlabThickness = PasSlabThickness
         self.ActiveSlabThickness = ActiveSlabThickness
         self.nSlabs = nSlabs
+        self.Segmentation = 24.
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
     def construct(self, geom):
         print("\033[36mconstruct in \033[1mSandEmiBarrelModBuilder\033[m\033[m")
+        print( "PasSlabThickness:------------> ", self.PasSlabThickness)
+        print( "ActiveSlabThickness:---------> ", self.ActiveSlabThickness)
 
         EMI_shape = geom.shapes.Trapezoid('EMI_shape', 
 					   dx1=self.trapezoidDim[0], 
@@ -46,8 +49,9 @@ class SandEmiBarrelModBuilder(gegede.builder.Builder):
             #rotation = geom.structure.Rotation(
             #    'rotation' + '_' + str(i), Q('0deg'),Q('-15deg'),Q('0deg'))  #Rotating the module on its axis accordingly
             
-            #tan = math.tan(math.pi/self.Segmentation)
-            tan = 0.5*(self.trapezoidDim[1] - self.trapezoidDim[0])/self.trapezoidDim[3]
+            tan = math.tan(math.pi/self.Segmentation)
+            #tan = 0.5*(self.trapezoidDim[1] - self.trapezoidDim[0])/self.trapezoidDim[3]
+            #tan = 0.5*(self.trapezoidDim[1] - self.trapezoidDim[0])/self.trapezoidDim[3]
             xposSlab=Q('0cm')
             yposSlab=Q('0cm')
             zposSlabActive = (-self.trapezoidDim[3] + 

@@ -1,3 +1,4 @@
+README.md
 setup.py
 duneggd/DetEnc.py
 duneggd/World.py
@@ -102,6 +103,8 @@ duneggd/SubDetector/STTFULL_aug20.py
 duneggd/SubDetector/SandECal.py
 duneggd/SubDetector/SandEmi.py
 duneggd/SubDetector/SandEmiBarrelMod.py
+duneggd/SubDetector/SandEmiRpc.py
+duneggd/SubDetector/SandEmiRpcBarrelMod.py
 duneggd/SubDetector/SandInnerVolume.py
 duneggd/SubDetector/SimpleSubDetector.py
 duneggd/SubDetector/SurSubDetector.py

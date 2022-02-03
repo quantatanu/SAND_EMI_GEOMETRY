@@ -1,1 +1,3 @@
-OUTPUT/*.gdml
+OUTPUT/*.*
+OUTPUT/GDML/*.*
+OUTPUT/ROOT/*.*
