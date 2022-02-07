@@ -12,13 +12,15 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                 # atanu adding these -------
 		BuildEmiRpcBarrelMod  = False,
                 emiThickness = None,
+                nLayers = None,
                 # --------------------------
                 **kwds):
         #-------------------------------------------
         self.BuildEmiRpcBarrelMod = BuildEmiRpcBarrelMod
         #-------------------------------------------
-        self.NEmiRpcModBarrel     = 24            # need 24 slabs if we want 15 degree coverage
-        self.emiThickness      = emiThickness  # taken from the cfg file
+        self.NEmiRpcModBarrel   = 24            # need 24 slabs if we want 15 degree coverage
+        self.nLayers            = nLayers
+        self.emiThickness       = nLayers * emiThickness  # taken from the cfg file
         self.BarrelRmin         = Q('330 cm')   # yoke rmax
         self.BarrelDZ           = Q('215 cm')   # yoke half-length 
         self.ang = (math.pi/self.NEmiRpcModBarrel)

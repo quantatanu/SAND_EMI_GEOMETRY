@@ -25,7 +25,6 @@ main (){
     then
         echo "You have chosen to compile, compiling...."
         sudo python3 setup.py develop
-        sleep 1
         echo ""
         echo ""
     fi
