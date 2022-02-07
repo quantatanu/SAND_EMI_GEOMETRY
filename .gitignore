@@ -2,3 +2,4 @@ OUTPUT/*.*
 OUTPUT/GDML/*.*
 OUTPUT/ROOT/*.*
 OUTPUT/GRAPHICS/*.*
+*.png

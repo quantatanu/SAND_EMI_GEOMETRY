@@ -21,7 +21,28 @@ outdir="${curdir}/OUTPUT/GDML/";
 
 
 reset;
-if [ $option = "-C" -o "-compile" ]
+
+echo "---------------------------------------"
+if [ $option == *"-o"* ]
+then
+    tags=$(echo $option | awk -F '-o' '{print $2}' | sed 's/\ /_/g')
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+    echo "tagsi-----------------------------------: $tags"
+    sleep 2
+else 
+    echo "???????????????????????????????????????"
+fi
+
+if [ $option == *"-C"* -o *"-compile"* ]
 then
     echo "You have chosen to compile, compiling...."
     sudo python3 setup.py develop
@@ -29,6 +50,9 @@ then
     echo ""
     echo ""
 fi
+
+
+
 
 
 
@@ -41,15 +65,15 @@ gegede-cli duneggd/Config/WORLDggd.cfg \
            duneggd/Config/SAND_MAGNET.cfg \
            duneggd/Config/SAND_ECAL.cfg \
            duneggd/Config/SAND_EMI_RPC.cfg \
-           -w World -o ${outdir}/SAND_opt3RPC.gdml
-            read -r -p "Do you want to display \"${outdir}/SAND_opt3RPC.gdml\"? [y/N] " response
+           -w World -o ${outdir}/SAND_opt3RPC${tags}.gdml
+            read -r -p "Do you want to display \"${outdir}/SAND_opt3RPC${tags}.gdml\"? [y/N] " response
             case "$response" in
                 [yY][eE][sS]|[yY]) 
-                    echo "./geodisplay_gdml \"${outdir}/SAND_opt3RPC.gdml)\""; 
-                    ./geodisplay_gdml "${outdir}/SAND_opt3RPC.gdml"; 
+                    echo "./geodisplay_gdml \"${outdir}/SAND_opt3RPC${tags}.gdml)\""; 
+                    ./geodisplay_gdml "${outdir}/SAND_opt3RPC${tags}.gdml"; 
                     ;;
                 *)
-                    do_something_else
+                    echo "Exiting...";
                     ;;
             esac
 fi
