@@ -3,3 +3,4 @@ OUTPUT/GDML/*.*
 OUTPUT/ROOT/*.*
 OUTPUT/GRAPHICS/*.*
 *.png
+*.pyc
