@@ -81,45 +81,6 @@ main (){
     fi
 
 
-
-
-
-    # SAND OPT 3RPC test
-    if [[ "${@}" == *"opt3RPC_test"* ]];
-    then
-        output="${outdir}/SAND_opt3RPC_test${tags}.gdml"
-        gegede-cli duneggd/Config/WORLDggd.cfg \
-                   duneggd/Config/ND_Hall_Air_Volume.cfg \
-                   duneggd/Config/ND_Hall_Rock.cfg \
-                   duneggd/Config/SAND_MAGNET.cfg \
-                   duneggd/Config/SAND_ECAL.cfg \
-                   duneggd/Config/SAND_EMI_RPC.cfg \
-                   -w World -o $output
-                read -r -p "Do you want to display \"$output\"? [y/N] " response
-                case "$response" in
-                    [yY][eE][sS]|[yY]) 
-                        echo "./geodisplay_gdml \"$output\""; 
-                        ./geodisplay_gdml "$output"; 
-                        ;;
-                    *)
-                        echo "Exiting...";
-                        ;;
-                esac
-                read -r -p "Do you want to delete the file: \"$output\"? [y/N] " response
-                case "$response" in
-                    [yY][eE][sS]|[yY]) 
-                        echo "deleting \"$output\" ..."; 
-                        echo "rm -rf \"$output\""; 
-                        rm -rf "$output"; 
-                        ;;
-                    *)
-                        echo "";
-                        ;;
-                esac
-
-    fi
-
-
 }
 
 

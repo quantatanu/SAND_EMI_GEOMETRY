@@ -4,3 +4,4 @@ OUTPUT/ROOT/*.*
 OUTPUT/GRAPHICS/*.*
 *.png
 *.pyc
+*.swp
