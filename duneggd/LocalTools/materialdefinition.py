@@ -278,7 +278,7 @@ def define_materials( g ):
     # use argon density at stp for now. has very little effect.
     rpcGas   = g.matter.Mixture( "rpcGas", density = "1.784*g/L",
                             components = (
-                                    ("aron",   0.75),
+                                    ("argon",   0.75),
                                     ("CH2FCF3", 0.20),
                                     ("C4H10",   0.04),
                                     ("SF6",     0.01)

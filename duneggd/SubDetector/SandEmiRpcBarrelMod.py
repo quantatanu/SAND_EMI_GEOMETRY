@@ -126,6 +126,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         EMIRPC_lv.placements.append( aEMIRPCFoam_0Place.name )
 
 
+
+
         #FIRST MYLAR LAYER =================================================================
         print('Mylar [0/2]')
         aEMIRPCMylar_0 = geom.shapes.Trapezoid('EMIRPCMylar_0', 
