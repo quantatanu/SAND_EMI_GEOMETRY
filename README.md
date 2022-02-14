@@ -4,6 +4,13 @@ This is a tool to build proposal geometries for DUNE near detector.
 
 It's based on the dunendggd [dunendggd](https://github.com/gyang9/dunendggd)
 
+
+
+# Note:
+    * Currently strip width/segment-size is used to segment the gas volume.
+
+
+
 # Setup
 
 ```bash
