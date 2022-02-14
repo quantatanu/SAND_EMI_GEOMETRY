@@ -7,7 +7,7 @@ It's based on the dunendggd [dunendggd](https://github.com/gyang9/dunendggd)
 
 
 # Note:
-    * Currently strip width/segment-size is used to segment the gas volume.
+    * Currently strip width/segment-size is used to segment the gas volume, with width of 1.5 mm and a gap of 0.05 mm between two segments/strips
 
 
 
