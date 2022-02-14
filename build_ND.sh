@@ -12,6 +12,9 @@ outdir="${curdir}/OUTPUT/GDML/";
 
 main (){
 
+
+    time_stamp=$(date +"%Y%m%d")
+
     reset;
     echo "---------------------------------------"
     if [[ "${@}" == *"-O"* ]]
@@ -36,7 +39,7 @@ main (){
     # SAND OPT 3RPC
     if [[ "${@}" == *"opt3RPC"* ]];
     then
-        output="${outdir}/SAND_opt3RPC${tags}.gdml"
+        output="${outdir}/SAND_opt3RPC_${time_stamp}${tags}.gdml"
         gegede-cli duneggd/Config/WORLDggd.cfg \
                    duneggd/Config/ND_Hall_Air_Volume.cfg \
                    duneggd/Config/ND_Hall_Rock.cfg \
