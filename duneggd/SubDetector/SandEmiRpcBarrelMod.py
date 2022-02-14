@@ -73,6 +73,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         
 
         xposStrip0 = -self.trapezoidDim[0] + 0.5 * self.StripWidth
+        xposGasSeg0 = -self.trapezoidDim[0] + 0.5 * self.StripWidth
+        xposGasSeg1 = -self.trapezoidDim[0] + 0.5 * self.StripWidth
         #xposStrip0 = -self.trapezoidDim[0] + self.StripWidth
         print("--------------------------------------------------------->INITIAL STRIP POSITION: ")
         print("xposStrip0 = ", -self.trapezoidDim[0], "+ 0.5 * ", self.StripWidth, " =", xposStrip0)
@@ -231,6 +233,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         #FIRST GAS LAYER ===================================================================
         print('Gas [1/2]')
+        '''
         #aEMIRPCGas_0 = geom.shapes.Trapezoid('EMIRPCGas_0_'+str(i), 
         aEMIRPCGas_0 = geom.shapes.Trapezoid('EMIRPCGas_0', 
                                                  dx1=self.trapezoidDim[1], 
@@ -256,7 +259,24 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
        
 
         EMIRPC_lv.placements.append( aEMIRPCGas_0Place.name )
-
+        '''
+        for j in range(self.nStrips+1):  # 2 cm wide Gas segments cover the whole 46 cm breadth if we place every 2.5 times their width
+            aEMIRPCGas_0 = geom.shapes.Trapezoid('EMIRPCGas_0_'+str(j), 
+                                                    dx1=self.StripWidth/2, 
+                                                    dx2=self.StripWidth/2,
+                                                    dy1=self.trapezoidDim[2], 
+                                                    dy2=self.trapezoidDim[2], 
+                                                    dz=0.5*self.StripThickness)
+            aEMIRPCGas_0_lv = geom.structure.Volume('volEMIRPCGas_0_'+str(j), 
+                                                    material=self.GasMat, 
+                                                    shape=aEMIRPCGas_0)
+            aEMIRPCGas_0Pos= geom.structure.Position('emiGas_0pos_'+str(j),
+                                                    xposGasSeg0, PosGas0[1], PosGas0[2])
+            aEMIRPCGas_0Place = geom.structure.Placement('emiGas_0pla_'+str(j),
+                                                    volume = aEMIRPCGas_0_lv,
+                                                    pos = aEMIRPCGas_0Pos)
+            EMIRPC_lv.placements.append( aEMIRPCGas_0Place.name )
+            xposGasSeg0 = xposGasSeg0 + self.StripWidth + self.StripGap
 
         #SECOND BAKELITE LAYER =============================================================
         print('Bakelite [2/4]')
@@ -337,11 +357,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
 
         #FIRST STRIP  LAYER ================================================================
-        #for j in range(18):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
         for j in range(self.nStrips+1):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
-            #xposStrip0 = xposStrip0 + 2.5 * self.StripWidth
-            #print("xposStrip:::::::::::::::::::: ", xposStrip0)
-            #aEMIRPCStrip_0 = geom.shapes.Trapezoid('EMIRPCStrip_0_'+str(i)+'_'+str(j), 
             aEMIRPCStrip_0 = geom.shapes.Trapezoid('EMIRPCStrip_0_'+str(j), 
                                                     dx1=self.StripWidth/2, 
                                                     dx2=self.StripWidth/2,
@@ -352,21 +368,13 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
             aEMIRPCStrip_0_lv = geom.structure.Volume('volEMIRPCStrip_0_'+str(j), 
                                                     material=self.StripMat, 
                                                     shape=aEMIRPCStrip_0)
-            #aEMIRPCStrip_lv.params.append(("SensDet","EMIRPCSci"))
-            #PosStrip0    = ltools.rotation(axisx, self.ang, PosStrip0)
-            #aEMIRPCStrip_0Pos= geom.structure.Position('emiStrip_0pos_'+str(i)+'_'+str(j),
-            print("--------------------------------------------------------->CURREN STRIP POSITION (strip # ",j,"): ", xposStrip0)
             aEMIRPCStrip_0Pos= geom.structure.Position('emiStrip_0pos_'+str(j),
                                                     xposStrip0, PosStrip0[1], PosStrip0[2])
-            #aEMIRPCStrip_0Place = geom.structure.Placement('emiStrip_0pla_'+str(i)+'_'+str(j),
             aEMIRPCStrip_0Place = geom.structure.Placement('emiStrip_0pla_'+str(j),
                                                     volume = aEMIRPCStrip_0_lv,
                                                     pos = aEMIRPCStrip_0Pos)
             EMIRPC_lv.placements.append( aEMIRPCStrip_0Place.name )
-            #xposStrip0 = xposStrip0 + self.StripWidth + 0.5 * self.StripWidth + self.StripGap
             xposStrip0 = xposStrip0 + self.StripWidth + self.StripGap
-            print("--------------------------------------------------------->NEXT STRIP POSITION (for strip # ",j+1,"): ")
-            print("xposStrip0 = ", xposStrip0, " + ", self.StripWidth, " + ", self.StripGap ," =", xposStrip0)
 
 
 
@@ -449,7 +457,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
 
         #SECOND GAS LAYER ==================================================================
-        print('Gas [1/2]')
+        print('Gas [2/2]')
+        '''
         #aEMIRPCGas_1 = geom.shapes.Trapezoid('EMIRPCGas_1_'+str(i), 
         aEMIRPCGas_1 = geom.shapes.Trapezoid('EMIRPCGas_1', 
                                                  dx1=self.trapezoidDim[1], 
@@ -475,6 +484,27 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
        
 
         EMIRPC_lv.placements.append( aEMIRPCGas_1Place.name )
+        '''
+        for j in range(self.nStrips+1):  # 2 cm wide Gas segments cover the whole 46 cm breadth if we place every 2.5 times their width
+            aEMIRPCGas_1 = geom.shapes.Trapezoid('EMIRPCGas_1_'+str(j), 
+                                                    dx1=self.StripWidth/2, 
+                                                    dx2=self.StripWidth/2,
+                                                    dy1=self.trapezoidDim[2], 
+                                                    dy2=self.trapezoidDim[2], 
+                                                    dz=0.5*self.StripThickness)
+            aEMIRPCGas_1_lv = geom.structure.Volume('volEMIRPCGas_1_'+str(j), 
+                                                    material=self.GasMat, 
+                                                    shape=aEMIRPCGas_1)
+            aEMIRPCGas_1Pos= geom.structure.Position('emiGas_1pos_'+str(j),
+                                                    xposGasSeg1, PosGas1[1], PosGas1[2])
+            aEMIRPCGas_1Place = geom.structure.Placement('emiGas_1pla_'+str(j),
+                                                    volume = aEMIRPCGas_1_lv,
+                                                    pos = aEMIRPCGas_1Pos)
+            EMIRPC_lv.placements.append( aEMIRPCGas_1Place.name )
+            xposGasSeg1 = xposGasSeg1 + self.StripWidth + self.StripGap
+
+
+
 
         #FOURTH BAKELITE LAYER =============================================================
         print('Bakelite [3/4]')
