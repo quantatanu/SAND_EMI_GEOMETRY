@@ -31,7 +31,7 @@ class SANDBuilder(gegede.builder.Builder):
         # The overall logical volume
         self.LVHalfLength=Q("3.1m")
         #self.LVRadius=Q("3.6m")
-        self.LVRadius=Q("4m") # atanu, to accommodate EMI
+        self.LVRadius=Q("4.3m") # atanu, to accommodate EMI
         self.LVMaterial="Air"
         # the CentralBField is really the only configurable parameter
         # since KLOE is already built
