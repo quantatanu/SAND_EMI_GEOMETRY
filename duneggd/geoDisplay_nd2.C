@@ -1,9 +1,10 @@
-//void geoDisplay_nd(TString test.gdml)
+void geoDisplay_nd2(TString fname)
 {
 	//gSystem->Load("libGdml");
 	gSystem->Load("libGeom");
 	TGeoManager *geo = new TGeoManager();
-	geo->Import("test.gdml");
+    //geo->Import("test.gdml");
+	geo->Import(fname);
 	geo->DefaultColors();
 
 	geo->SetTopVisible();

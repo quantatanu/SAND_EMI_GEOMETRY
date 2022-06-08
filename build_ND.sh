@@ -2,7 +2,7 @@
 
 
 # example run:
-# ./build_ND.sh opt3RPC -C -O $(date +"%Y%m%d%H%M%S")       # where -C invokes a compilation and whatever comes after -O is added as a tag to the output gdml file name
+# ./build_ND.sh opt3RPC -C -O "tags"       # where -C invokes a compilation and whatever comes after -O is added as a tag to the output gdml file name
 
 
 curdir=$(pwd);
@@ -13,6 +13,7 @@ outdir="${curdir}/OUTPUT/GDML/";
 main (){
 
     reset;
+    time_stamp=$(date +"%Y-%m-%d_%Z")
     echo "---------------------------------------"
     if [[ "${@}" == *"-O"* ]]
     then
@@ -36,7 +37,7 @@ main (){
     # SAND OPT 3RPC
     if [[ "${@}" == *"opt3RPC"* ]];
     then
-        output="${outdir}/SAND_opt3RPC${tags}.gdml"
+        output="${outdir}/SAND_opt3RPC_${time_stamp}${tags}.gdml"
         gegede-cli duneggd/Config/WORLDggd.cfg \
                    duneggd/Config/ND_Hall_Air_Volume.cfg \
                    duneggd/Config/ND_Hall_Rock.cfg \
@@ -66,12 +67,16 @@ main (){
                         echo "Exiting...";
                         ;;
                 esac
-                read -r -p "Do you want to delete the file: \"$output\"? [y/N] " response
+                echo -e "\e[31m"
+                read -r -p "\e[31m Do you want to delete the file: \"$output\"\e[0m? [y/N] " response
+                echo -e "\e[0m"
                 case "$response" in
                     [yY][eE][sS]|[yY]) 
+                        echo -e "\e[31m"
                         echo "deleting \"$output\" ..."; 
                         echo "rm -rf \"$output\""; 
                         rm -rf "$output"; 
+                        echo -e "\e[0m"
                         ;;
                     *)
                         echo "";
@@ -79,6 +84,71 @@ main (){
                 esac
 
     fi
+
+
+
+
+
+
+
+
+
+    # JUST EMI
+
+    if [[ "${@}" == *"justEMI"* ]];
+    then
+        output="${outdir}/SAND_justEMI_${time_stamp}${tags}.gdml"
+        gegede-cli duneggd/Config/JUSTEMI/WORLDggd.cfg \
+                   duneggd/Config/JUSTEMI/ND_Hall_Air_Volume.cfg \
+                   duneggd/Config/JUSTEMI/ND_Hall_Rock.cfg \
+                   duneggd/Config/JUSTEMI/SAND_MAGNET.cfg \
+                   duneggd/Config/JUSTEMI/SAND_EMI_RPC.cfg \
+                   -w World -o $output
+                read -r -p "Do you want to display \"$output\"? [y/N] " response
+                case "$response" in
+                    [yY][eE][sS]|[yY]) 
+                        echo "./geodisplay_gdml \"$output\""; 
+                        ./geodisplay_gdml "$output"; 
+                        ;;
+                    *)
+                        echo "Exiting...";
+                        ;;
+                esac
+                echo -e "\e[31m"
+                read -r -p "\e[31m Do you want to delete the file: \"$output\"\e[0m? [y/N] " response
+                echo -e "\e[0m"
+                case "$response" in
+                    [yY][eE][sS]|[yY]) 
+                        echo -e "\e[31m"
+                        echo "deleting \"$output\" ..."; 
+                        echo "rm -rf \"$output\""; 
+                        rm -rf "$output"; 
+                        echo -e "\e[0m"
+                        ;;
+                    *)
+                        echo "";
+                        ;;
+                esac
+
+    fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

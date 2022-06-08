@@ -230,6 +230,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
             aEMIRPCGas_0_lv = geom.structure.Volume('volEMIRPCGas_0_'+str(j), 
                                                     material=self.GasMat, 
                                                     shape=aEMIRPCGas_0)
+            aEMIRPCGas_0_lv.params.append(("SensDet","EMIGas"))
             # EFIELD ----
             EField="(0.0, 0.0, -5000)"
             print("Setting aEMIRPCGas_0_lv EField : ", EField)
@@ -288,6 +289,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         aEMIRPCCoat_1Place = geom.structure.Placement('emiCoat_1pla',
                                                 volume = aEMIRPCCoat_1_lv,
                                                 pos = aEMIRPCCoat_1Pos)
+
         EMIRPC_lv.placements.append( aEMIRPCCoat_1Place.name )
         print("EMIRPC_lv.placements.append(", aEMIRPCCoat_1Place.name, ")")
 
@@ -412,6 +414,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
             aEMIRPCGas_1_lv = geom.structure.Volume('volEMIRPCGas_1_'+str(j), 
                                                     material=self.GasMat, 
                                                     shape=aEMIRPCGas_1)
+            aEMIRPCGas_1_lv.params.append(("SensDet","EMIGas"))
             # EFIELD ----
             EField="(0.0, 0.0, 5000)"
             print("Setting aEMIRPCGas_1_lv EField : ", EField)
@@ -507,11 +510,26 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
                                                 shape=aEMIRPCFoam_1)
         aEMIRPCFoam_1Pos= geom.structure.Position('emiFoam_3pos',
                                                 PosFoam1[0], PosFoam1[1], PosFoam1[2])
+
+
         aEMIRPCFoam_1Place = geom.structure.Placement('emiFoam_1pla',
                                                 volume = aEMIRPCFoam_1_lv,
                                                 pos = aEMIRPCFoam_1Pos)
+
+
+        #aEMIRPCFoam_1rotation = geom.structure.Rotation(
+        #    'EMIRPCFoam_1rotation', Q('0deg'), 0 * Q('1deg'),
+        #    Q('90deg'))  #Rotating the module on its axis accordingly
+        #aEMIRPCFoam_1Place = geom.structure.Placement('EMIRPCFaom_1Place',
+        #                                      volume=aEMIRPCFoam_1_lv,
+        #                                      pos=aEMIRPCFoam_1Pos,
+        #                                      rot=aEMIRPCFoam_1rotation,
+        #                                      copynumber=0)
+
+
         EMIRPC_lv.placements.append( aEMIRPCFoam_1Place.name )
         print("EMIRPC_lv.placements.append(", aEMIRPCFoam_1Place.name, ")")
+
 
 
         # updating the base position for the next layer
