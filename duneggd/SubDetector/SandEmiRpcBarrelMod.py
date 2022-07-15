@@ -24,6 +24,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 		  StripWidth=None, 
 		  StripGap=None, 
 		  StripMat=None, 
+		  nStrips=None, 
 		  nLayers=None, 
 		  **kwds):
         self.trapezoidDim = trapezoidDim
@@ -42,11 +43,12 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         self.GasMat = GasMat
         self.StripMat = StripMat
         self.nLayers = nLayers
+        self.nStrips = nStrips
         #self.nSlabs = 3
         self.Segmentation = 24.
         #self.ang = 15
         self.tan = math.tan(math.pi/self.Segmentation)
-        self.nStrips = 2*(int((trapezoidDim[0].magnitude)/(StripWidth.magnitude+StripGap.magnitude)))   # 2 because half lengths used in trapezoiddim
+        #self.nStrips = 2*(int((trapezoidDim[0].magnitude)/(StripWidth.magnitude+StripGap.magnitude)))   # 2 because half lengths used in trapezoiddim
         self.BasePos = -trapezoidDim[3]
         
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
@@ -95,7 +97,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         # STRUCTURE (bottom up): Foam0 -> Coat0 -> Bakelite0 -> Gas0 -> Bakelite1 -> Coat1 -> Mylar0 -> Strips0 -> Mylar1 -> Coat2 -> Bakelite2 -> Gas1 -> Bakelite3 -> Coat3 -> Foam1 
         zposFoam0       = self.BasePos  + 0.5 * self.FoamThickness
-        zposXXStrip      = self.BasePos  + self.FoamThickness + 0.5 * self.StripThickness
+        zposXXStrip     = self.BasePos  + self.FoamThickness + 0.5 * self.StripThickness
         zposMylar0      = self.BasePos  + self.FoamThickness + self.StripThickness + 0.5 * self.MylarThickness
         zposCoat0       = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + 0.5 * self.CoatThickness
         zposBakelite0   = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + 0.5 * self.BakeliteThickness
@@ -104,19 +106,19 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         zposCoat1       = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + 0.5 * self.CoatThickness
         zposMylar1      = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.CoatThickness + 0.5 * self.MylarThickness
         zposYYStrip      = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.CoatThickness + self.MylarThickness + 0.5 * self.StripThickness 
-        zposFoam1       = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.CoatThickness + self.MylarThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.CoatThickness + self.MylarThickness + 0.5 * self.FoamThickness
+        zposFoam1       = self.BasePos  + self.FoamThickness + self.StripThickness + self.MylarThickness + self.CoatThickness + self.BakeliteThickness + self.GasThickness + self.BakeliteThickness + self.CoatThickness + self.MylarThickness + self.StripThickness +  0.5 * self.FoamThickness
         
-        PosFoam0    = [xpos, ypos, zposFoam0]            
+        PosFoam0     = [xpos, ypos, zposFoam0]            
         PosXXStrip   = [xpos, ypos, zposXXStrip]            
-        PosMylar0   = [xpos, ypos, zposMylar0]            
-        PosCoat0    = [xpos, ypos, zposCoat0]            
-        PosBakelite0= [xpos, ypos, zposBakelite0]            
-        PosGas0     = [xpos, ypos, zposGas0]            
-        PosBakelite1= [xpos, ypos, zposBakelite1]            
-        PosCoat1    = [xpos, ypos, zposCoat1]            
-        PosMylar1   = [xpos, ypos, zposMylar1]            
+        PosMylar0    = [xpos, ypos, zposMylar0]            
+        PosCoat0     = [xpos, ypos, zposCoat0]            
+        PosBakelite0 = [xpos, ypos, zposBakelite0]            
+        PosGas0      = [xpos, ypos, zposGas0]            
+        PosBakelite1 = [xpos, ypos, zposBakelite1]            
+        PosCoat1     = [xpos, ypos, zposCoat1]            
+        PosMylar1    = [xpos, ypos, zposMylar1]            
         PosYYStrip   = [xpos, ypos, zposYYStrip]            
-        PosFoam1    = [xpos, ypos, zposFoam1]            
+        PosFoam1     = [xpos, ypos, zposFoam1]            
         
 
 
@@ -143,13 +145,14 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         #FIRST STRIP  LAYER ================================================================
         print('Strip [XX]')
-        for j in range(self.nStrips+1):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
+        for j in range(self.nStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
             aEMIRPCXXStrip = geom.shapes.Trapezoid('EMIRPCXXStrip_'+str(j), 
-                                                    dx1=self.StripWidth/2, 
-                                                    dx2=self.StripWidth/2,
+                                                    dx1=self.StripWidth/2.0, 
+                                                    dx2=self.StripWidth/2.0,
                                                     dy1=self.trapezoidDim[2], 
                                                     dy2=self.trapezoidDim[2], 
                                                     dz=0.5*self.StripThickness)
+            print("ACTUAL WIDTH----------------------------->>>>>", self.StripWidth)
             aEMIRPCXXStrip_lv = geom.structure.Volume('volEMIRPCXXStrip_'+str(j), 
                                                     material=self.StripMat, 
                                                     shape=aEMIRPCXXStrip)
@@ -236,11 +239,11 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         print('Gas [1/2]')
         #for j in range(self.nStrips+1):  # 2 cm wide Gas segments cover the whole 46 cm breadth if we place every 2.5 times their width
         aEMIRPCGas = geom.shapes.Trapezoid('EMIRPCGas', 
-                                                dx1=self.StripWidth/2, 
-                                                dx2=self.StripWidth/2,
+                                                dx1=self.trapezoidDim[1], 
+                                                dx2=self.trapezoidDim[1],
                                                 dy1=self.trapezoidDim[2], 
                                                 dy2=self.trapezoidDim[2], 
-                                                dz=0.5*self.StripThickness)
+                                                dz=0.5*self.GasThickness)
         aEMIRPCGas_lv = geom.structure.Volume('volEMIRPCGas', 
                                                 material=self.GasMat, 
                                                 shape=aEMIRPCGas)
@@ -330,7 +333,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         #FIRST STRIP  LAYER ================================================================
         print('Strip [YY]')
-        for j in range(self.nStrips+1):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
+        for j in range(self.nStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
             aEMIRPCYYStrip = geom.shapes.Trapezoid('EMIRPCYYStrip_'+str(j), 
                                                     dx1=self.StripWidth/2, 
                                                     dx2=self.StripWidth/2,

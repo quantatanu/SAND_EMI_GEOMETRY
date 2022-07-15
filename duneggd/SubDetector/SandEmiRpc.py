@@ -89,6 +89,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         emiMin = self.BarrelRmin;
         ang = 360 / self.NEmiRpcModBarrel
         delta = ang/2
+        #'''
         for k in range(5):
             #for i in range(self.nLayers):
                 for j in range(self.NEmiRpcModBarrel):
@@ -139,13 +140,16 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                 # next minimum radius to start the layer
                 #emiMin = (emiMin + self.moduleThickness)/math.cos(self.ang)
                 #'''
-        ''' testing for a single module building
+        #'''
+        ''' 
+        #testing for a single module building
         axisx = (0, 0, 1)
         axisy = (0, 1, 0)
         axisz = (1, 0, 0)
         theta = 0
         #ModPosition = [Q('0 mm'), Q('3300 mm')+Q('233 mm'), Q('0 mm')]
-        ModPosition = [Q('0 cm'), self.BarrelRmin + 0.5*self.moduleThickness+Q('167 mm'), Q('0 cm')]
+        #ModPosition = [Q('0 cm'), self.BarrelRmin + 0.5*self.moduleThickness + Q('167 mm'), Q('0 cm')]
+        ModPosition = [Q('0 cm'), self.BarrelRmin + 0.5*self.moduleThickness, Q('0 cm')]
         print("----------------> MODPOSITION-----------------------: ", ModPosition)
         ModPositionNew = ltools.rotation(
             axisy, theta, ModPosition
