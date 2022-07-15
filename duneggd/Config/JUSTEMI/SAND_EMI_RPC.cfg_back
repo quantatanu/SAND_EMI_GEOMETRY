@@ -1,0 +1,61 @@
+# SAND External Muon ID (EMIRPC) Syestem  (Ecal like design)
+[SANDEMIRPC]
+class                       = duneggd.SubDetector.SandEmiRpc.SandEmiRpcBuilder
+subbuilders                 = ['SANDEMIRPCBARRELMOD']
+#moduleThickness                = (4 * Q('2 mm') + 4 * Q('0.05 mm ') + 4 * Q('0.05 mm') + 2 * Q('2 mm') + 2 * Q('4 mm') + 1 * Q('1.5 mm'))  # = 21.9
+#single layer rpc, two X-Y strip layers
+moduleThickness                = Q('4 mm') + Q('0.5 mm') + Q('0.05 mm') + Q('0.05 mm') + Q('2 mm') + Q('2 mm') + Q('2 mm') + Q('0.05 mm') + Q('0.05 mm') + Q('0.5 mm') + Q('4 mm') 
+#                                 4 * bakelite  + 4 * mylar         + 4 * coat         + 2 * gas       + 2 * foam      + 1 * strip      
+trapezoidDim                = [Q('43 cm'), Q('43 cm'), Q('43 cm'), Q('21.9 mm')/2]
+nLayers                     = 2
+BuildEmiRpcBarrelMod        = True 
+
+[SANDEMIRPCBARRELMOD]
+class                       = duneggd.SubDetector.SandEmiRpcBarrelMod.SandEmiRpcBarrelModBuilder
+#trapezoidDim                = [Q('43.19 cm'), Q('43.19 cm'), Q('215 cm'), Q('21.9 mm')/2] # 0th = dx1, half bigger side, 1st = dx2, half smaller side, 2nd = dy1 = dy2, half length, 3rd = dz = half thickness
+trapezoidDim                = [Q('43 cm'), Q('43 cm'), Q('43 cm'), Q('15.2 mm')/2] # 0th = dx1, half bigger side, 1st = dx2, half smaller side, 2nd = dy1 = dy2, half length, 3rd = dz = half thickness
+BakeliteThickness           = Q('2 mm')        
+BakeliteMat                 = 'Bakelite'
+#BakeliteMat                 = 'Air'
+GasThickness                = Q('2 mm')        
+GasMat                      = 'rpcGas'
+FoamThickness               = Q('4 mm')       
+FoamMat                     = 'PolyurethaneFoam'
+#FoamMat                     = 'Air'
+CoatThickness               = Q('0.05 mm')      
+CoatMat                     = 'Graphite'
+#CoatMat                     = 'Air'
+StripThickness              = Q('0.5 mm') 
+StripWidth                  = Q('2.4794 cm')  # this must remain in cm, do not change it to mm   
+StripGap                    = Q('0.05 mm') # this must remain in mm, do not change it to cm
+StripMat                    = 'Copper'
+MylarThickness              = Q('0.05 mm')   
+MylarMat                    = 'Mylar'
+#MylarMat                    = 'Air'
+nLayers                     = 2        
+
+#4 mm + 0.5 mm + 0.05 mm + 0.05 mm + 2 mm + 2 mm + 2 mm + 0.05 mm + 0.05 mm + 0.5 mm + 4 mm 
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# STRUCTURE (bottom up): Foam0 -> Coat0 -> Bakelite0 -> Gas0 -> Bakelite1 -> Coat1 -> Mylar0 -> Strips0 -> Mylar1 -> Coat2 -> Bakelite2 -> Gas1 -> Bakelite3 -> Coat3 -> Foam1 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# some geometry details: consider I need a EMIRPC of thickness t = (2*ta + tp), where ta = active thickness and tp is passive
+# if b is the lower base and B is the upper base and s is the side length, then
+# ba_0 = R * tan theta/2, theta = 2Pi/N, N = number of modules, 24 in our case
+# Ba_0 = (R + ta) * tan theta/2
+# sa = ta / cos theta/2                 (side length of an active layer)
+#
+# bp_0 = Ba_0
+# Bp_0 = (R+ta+tp) * tan theta/2
+# ba_1 = Bp_0
+# Ba_1 = (R+ta+tp+ta) * tan theta/2
+# sp = tp / cos theta/2                 (side length of a passive layer)
+#
+# We will need to create a cylinder with,
+# r1 = R = 330 cm
+# and 
+# r2 = (R+t) / cos theta/2
+
+#trapezoidDim                = [Q('43.445324cm'), Q('45.946722cm'), Q('215cm'), Q('19.16395cm')] # new experimental values on 31 Jan
