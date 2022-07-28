@@ -24,7 +24,8 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         self.moduleThickness       = moduleThickness  # taken from the cfg file
         self.BarrelRmin         = Q('330 cm')   # yoke rmax
         self.BarrelDZ           = Q('215 cm')   # yoke half-length 
-        self.emiThickness = nLayers * 2 * moduleThickness
+        self.emiThickness = nLayers * moduleThickness
+        #self.emiThickness = moduleThickness
         self.ang = (math.pi/self.NEmiRpcModBarrel)
         self.rmax_barrel = (self.BarrelRmin + self.emiThickness)/math.cos(self.ang) # for cylinder-shaped emi enclosing logical volume
         #self.barrel_thickness = self.rmax_barrel - self.BarrelRmin                  # for cylinder-shaped emi enclosing logical volume
@@ -46,7 +47,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         print ("-------------------------------------------------------------------------------------------------")
         
         # barrel
-        ''' POLYHEDRON SHAPED EMI ENCLOSING LOGICAL VOLUME
+        #''' POLYHEDRON SHAPED EMI ENCLOSING LOGICAL VOLUME
         barrel_shape = geom.shapes.PolyhedraRegular("sand_emi_barrel_shape",\
                                                     numsides=self.NEmiRpcModBarrel, 
                                                     rmin=self.BarrelRmin, 
@@ -54,13 +55,13 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                                                     self.emiThickness, # 2 * for alternating structure
                                                     dz=self.BarrelDZ,
                                                     sphi=Q(self.ang))
-        '''
         #'''
+        '''
         barrel_shape = geom.shapes.Tubs("sand_emi_barrel_shape",
                                 rmin=self.BarrelRmin, 
                                 rmax=self.rmax_barrel, 
                                 dz=self.BarrelDZ)
-        #'''
+        '''
 
 
 
