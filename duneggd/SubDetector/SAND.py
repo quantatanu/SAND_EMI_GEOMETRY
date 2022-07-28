@@ -76,8 +76,8 @@ class SANDBuilder(gegede.builder.Builder):
         print("KLOEBuilder::construct()")
         print("main_lv = "+ main_lv.name)
         self.add_volume( main_lv )
-        #self.build_yoke(main_lv, geom)
-        #self.build_solenoid(main_lv, geom)
+        self.build_yoke(main_lv, geom)
+        self.build_solenoid(main_lv, geom)
 
 
 	# Magnetized internal volume
