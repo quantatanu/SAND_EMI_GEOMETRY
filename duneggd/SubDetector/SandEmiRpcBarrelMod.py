@@ -24,7 +24,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 		  StripWidth=None, 
 		  StripGap=None, 
 		  StripMat=None, 
-		  nStrips=None, 
+		  xnStrips=None, 
+		  ynStrips=None, 
 		  nLayers=None, 
 		  **kwds):
         self.trapezoidDim = trapezoidDim
@@ -43,7 +44,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         self.GasMat = GasMat
         self.StripMat = StripMat
         self.nLayers = nLayers
-        self.nStrips = nStrips
+        self.xnStrips = xnStrips
+        self.ynStrips = ynStrips
         #self.nSlabs = 3
         self.Segmentation = 24.
         #self.ang = 15
@@ -56,6 +58,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         print("----------------------------------------------------------------------")
         print("\033[36mconstruct in \033[1mSandEmiRpcBarrelModBuilder\033[m\033[m")
         print("----------------------------------------------------------------------")
+        print( "trapezoidDim                : ", self.trapezoidDim) 
         print( "FoamThickness               : ", self.FoamThickness)
         print( "MylarThickness              : ", self.MylarThickness)
         print( "BakeliteThickness           : ", self.BakeliteThickness)
@@ -71,7 +74,8 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         print( "StripGap                  : ", self.StripGap)
         print("----------------------------------------------------------------------")
         print( "nLayers                     : ", self.nLayers)
-        print( "nStrips                     : ", self.nStrips)
+        print( "xnStrips                     : ", self.xnStrips)
+        print( "ynStrips                     : ", self.ynStrips)
         print("----------------------------------------------------------------------")
 
 
@@ -88,9 +92,12 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
         
 
         xposXXStrip = -self.trapezoidDim[0] + 0.5 * self.StripWidth
-        yposYYStrip = -self.trapezoidDim[0] + 0.5 * self.StripWidth
+        yposYYStrip = -self.trapezoidDim[2] + 0.5 * self.StripWidth
+        #xposYYStrip = -self.trapezoidDim[2] + 0.5 * self.StripWidth
         print("--------------------------------------------------------->INITIAL STRIP POSITION: ")
         print("xposXXStrip = ", -self.trapezoidDim[0], "+ 0.5 * ", self.StripWidth, " =", xposXXStrip)
+        print("yposXXStrip = ", -self.trapezoidDim[2], "+ 0.5 * ", self.StripWidth, " =", yposYYStrip)
+        #print("xposXXStrip = ", -self.trapezoidDim[2], "+ 0.5 * ", self.StripWidth, " =", xposYYStrip)
         xpos=Q('0cm')
         ypos=Q('0cm')
         axisx = (0, 0, 1)
@@ -145,7 +152,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         #FIRST STRIP  LAYER ================================================================
         print('Strip [XX]')
-        for j in range(self.nStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
+        for j in range(self.xnStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
             aEMIRPCXXStrip = geom.shapes.Trapezoid('EMIRPCXXStrip_'+str(j), 
                                                     dx1=self.StripWidth/2.0, 
                                                     dx2=self.StripWidth/2.0,
@@ -333,18 +340,19 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
 
         #FIRST STRIP  LAYER ================================================================
         print('Strip [YY]')
-        for j in range(self.nStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
+        for j in range(self.ynStrips):  # 2 cm wide Strips cover the whole 46 cm breadth if we place every 2.5 times their width
             aEMIRPCYYStrip = geom.shapes.Trapezoid('EMIRPCYYStrip_'+str(j), 
                                                     dx1=self.StripWidth/2, 
                                                     dx2=self.StripWidth/2,
-                                                    dy1=self.trapezoidDim[2], 
-                                                    dy2=self.trapezoidDim[2], 
+                                                    dy1=self.trapezoidDim[0], 
+                                                    dy2=self.trapezoidDim[0], 
                                                     dz=0.5*self.StripThickness)
             aEMIRPCYYStrip_lv = geom.structure.Volume('volEMIRPCYYStrip_'+str(j), 
                                                     material=self.StripMat, 
-                                                    shape=aEMIRPCXXStrip)
+                                                    shape=aEMIRPCYYStrip)
             aEMIRPCYYStripPos= geom.structure.Position('emiYYStrippos_'+str(j),
                                                     PosYYStrip[0], yposYYStrip, PosYYStrip[2])
+                                                    #xposYYStrip, yposYYStrip, PosYYStrip[2])
             
             aEMIRPCYYStriprotation = geom.structure.Rotation(
                 'EMIRPCYYStriprotation_'+str(j), Q('0deg'),  Q('0deg'),
@@ -366,6 +374,7 @@ class SandEmiRpcBarrelModBuilder(gegede.builder.Builder):
             
             print("EMIRPC_lv.placements.append(", aEMIRPCYYStripPlace.name, ")")
             yposYYStrip = yposYYStrip + self.StripWidth + self.StripGap
+            #xposYYStrip = xposYYStrip + self.StripWidth + self.StripGap
             
 
         #SECOND FOAM LAYER =================================================================

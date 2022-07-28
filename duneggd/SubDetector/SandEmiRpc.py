@@ -29,6 +29,10 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         self.rmax_barrel = (self.BarrelRmin + self.emiThickness)/math.cos(self.ang) # for cylinder-shaped emi enclosing logical volume
         #self.barrel_thickness = self.rmax_barrel - self.BarrelRmin                  # for cylinder-shaped emi enclosing logical volume
         self.trapezoidDim      = trapezoidDim 
+        print("**************************************************************")
+        print ("SandEmiRpcBuilder: ")
+        print("---------------------------------------------------------------")
+        print("trapezoidDim: ", self.trapezoidDim)
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
     def construct(self, geom):
         print("\033[36mconstruct in \033[1mSandEmiRpcBuilder\033[m\033[m")
@@ -89,17 +93,21 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         emiMin = self.BarrelRmin;
         ang = 360 / self.NEmiRpcModBarrel
         delta = ang/2
-        #'''
-        for k in range(5):
+        '''
+        #for k in range(5):
+        for k in range(2):
             #for i in range(self.nLayers):
                 for j in range(self.NEmiRpcModBarrel):
-
                     axisy = (0, 1, 0)
                     axisz = (1, 0, 0)
                     #ang = (360 / self.NEmiRpcModBarrel)/self.nLayers
                     #theta = j * ang + i * delta
                     theta = j * ang
-                    ModPosition = [Q('0mm'), - 4 * self.trapezoidDim[2] + 2 * self.trapezoidDim[2] * k, emiMin + 0.5*self.moduleThickness]
+                    #ModPosition = [Q('0mm'), - 4 * self.trapezoidDim[2] + 2 * self.trapezoidDim[2] * k, emiMin + 0.5*self.moduleThickness]
+                    ModPosition = [Q('0mm'), - self.trapezoidDim[2] + 2 * self.trapezoidDim[2] * k, emiMin + 0.5*self.moduleThickness]
+                    print ("________________________________________")
+                    print ("k: ",k, "j: ",j, ", Pos: ", ModPosition)
+                    print ("________________________________________")
                     #ModPosition = [Q('0mm'), Q('0mm'), emiMin + 0.5*self.moduleThickness]
 
                     #ModPosition = [Q('0mm'), Q('-43*4 cm'), emiMin + 0.5*self.moduleThickness]
@@ -139,9 +147,10 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                 
                 # next minimum radius to start the layer
                 #emiMin = (emiMin + self.moduleThickness)/math.cos(self.ang)
+                print("**************************************************************")
                 #'''
-        #'''
-        ''' 
+        '''
+        #''' 
         #testing for a single module building
         axisx = (0, 0, 1)
         axisy = (0, 1, 0)
@@ -182,7 +191,8 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
 
         main_lv.placements.append(EMIRPC_place.name)
         #main_lv.placements.append(emi_lv_place.name)
-        '''
+        print("**************************************************************")
+        #'''
 
 
                 ################################################
