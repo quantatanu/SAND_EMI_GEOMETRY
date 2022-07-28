@@ -93,7 +93,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         emiMin = self.BarrelRmin;
         ang = 360 / self.NEmiRpcModBarrel
         delta = ang/2
-        '''
+        #'''
         #for k in range(5):
         for k in range(2):
             #for i in range(self.nLayers):
@@ -149,8 +149,8 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
                 #emiMin = (emiMin + self.moduleThickness)/math.cos(self.ang)
                 print("**************************************************************")
                 #'''
-        '''
-        #''' 
+        #'''
+        ''' 
         #testing for a single module building
         axisx = (0, 0, 1)
         axisy = (0, 1, 0)
@@ -192,7 +192,7 @@ class SandEmiRpcBuilder(gegede.builder.Builder):
         main_lv.placements.append(EMIRPC_place.name)
         #main_lv.placements.append(emi_lv_place.name)
         print("**************************************************************")
-        #'''
+        '''
 
 
                 ################################################
