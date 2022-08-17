@@ -13,7 +13,7 @@ class SandEmiRpcFoam0Builder(gegede.builder.Builder):
 		BuildEmiRpcFoam0BarrelMod   = False,
                 layerThickness             = None,
                 trapezoidDim                = None,
-                LayerRmin                   = None,
+                layerRmin                   = None,
                 NEmiRpcModBarrel            = None,
                 # --------------------------
                 **kwds):
@@ -22,11 +22,11 @@ class SandEmiRpcFoam0Builder(gegede.builder.Builder):
         #-------------------------------------------
         self.NEmiRpcModBarrel       = NEmiRpcModBarrel                 # need 24 slabs if we want 15 degree coverage
         self.layerThickness        = layerThickness  # taken from the cfg file
-        self.LayerRmin              = LayerRmin
+        self.layerRmin              = layerRmin
         self.BarrelDZ               = Q('215 cm')   # yoke half-length 
         self.layerThickness        = layerThickness
         self.ang                    = (math.pi/self.NEmiRpcModBarrel)
-        self.rmax_layer            = (self.LayerRmin + self.layerThickness)/math.cos(self.ang) # for cylinder-shaped emirpcfoam0 enclosing logical volume
+        self.rmax_layer            = (self.layerRmin + self.layerThickness)/math.cos(self.ang) # for cylinder-shaped emirpcfoam0 enclosing logical volume
         self.trapezoidDim           = trapezoidDim 
         print("**************************************************************")
         print ("SandEmiRpcFoam0Builder: ")
@@ -37,7 +37,7 @@ class SandEmiRpcFoam0Builder(gegede.builder.Builder):
         print("\033[36mconstruct in \033[1mSandEmiRpcFoam0Builder\033[m\033[m")
         print ("==============VARIOUS DIMENSIONS=================================================================")
         print ("# OF MODULES         :                       ",self.NEmiRpcModBarrel)
-        print ("BARREL RMIN          :                       ",self.LayerRmin)
+        print ("BARREL RMIN          :                       ",self.layerRmin)
         print ("BARREL LENGTH        :                       ",self.BarrelDZ)    
         print ("EMI MODULE THICKNESS :                       ",self.layerThickness)
         print ("EMI EMI    THICKNESS :                       ",self.layerThickness)
@@ -47,8 +47,8 @@ class SandEmiRpcFoam0Builder(gegede.builder.Builder):
         # barrel
         barrel_shape = geom.shapes.PolyhedraRegular("sand_emirpcfoam0_barrel_shape",\
                                                     numsides=self.NEmiRpcModBarrel, 
-                                                    rmin=self.LayerRmin, 
-                                                    rmax=self.LayerRmin + 
+                                                    rmin=self.layerRmin, 
+                                                    rmax=self.layerRmin + 
                                                     self.layerThickness, # 2 * for alternating structure
                                                     dz=self.BarrelDZ,
                                                     sphi=Q(self.ang))
@@ -77,7 +77,7 @@ class SandEmiRpcFoam0Builder(gegede.builder.Builder):
         emirpcfoam0_module_lv=emirpcfoam0_module_builder.get_volume()
 
         #'''
-        emirpcfoam0Min = self.LayerRmin;
+        emirpcfoam0Min = self.layerRmin;
         ang = 360 / self.NEmiRpcModBarrel
         delta = ang/2
         #for k in range(5):

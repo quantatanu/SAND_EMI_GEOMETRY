@@ -13,7 +13,7 @@ class SandEmiRpcStripXXBuilder(gegede.builder.Builder):
 		BuildEmiRpcStripXXBarrelMod   = False,
                 layerThickness             = None,
                 trapezoidDim                = None,
-                LayerRmin                   = None,
+                layerRmin                   = None,
                 NEmiRpcStripXXModBarrel       = None,
                 # --------------------------
                 **kwds):
@@ -22,11 +22,11 @@ class SandEmiRpcStripXXBuilder(gegede.builder.Builder):
         #-------------------------------------------
         self.NEmiRpcStripXXModBarrel  = NEmiRpcStripXXModBarrel            # need 24 slabs if we want 15 degree coverage
         self.layerThickness        = layerThickness  # taken from the cfg file
-        self.LayerRmin              = LayerRmin
+        self.layerRmin              = layerRmin
         self.BarrelDZ               = Q('215 cm')   # yoke half-length 
         self.layerThickness        = layerThickness
         self.ang                    = (math.pi/self.NEmiRpcStripXXModBarrel)
-        self.rmax_layer            = (self.LayerRmin + self.layerThickness)/math.cos(self.ang) # for cylinder-shaped emirpcstripxx enclosing logical volume
+        self.rmax_layer            = (self.layerRmin + self.layerThickness)/math.cos(self.ang) # for cylinder-shaped emirpcstripxx enclosing logical volume
         self.trapezoidDim           = trapezoidDim 
         print("**************************************************************")
         print ("SandEmiRpcStripXXBuilder: ")
@@ -37,7 +37,7 @@ class SandEmiRpcStripXXBuilder(gegede.builder.Builder):
         print("\033[36mconstruct in \033[1mSandEmiRpcStripXXBuilder\033[m\033[m")
         print ("==============VARIOUS DIMENSIONS=================================================================")
         print ("# OF MODULES         :                       ",self.NEmiRpcStripXXModBarrel)
-        print ("BARREL RMIN          :                       ",self.LayerRmin)
+        print ("BARREL RMIN          :                       ",self.layerRmin)
         print ("BARREL LENGTH        :                       ",self.BarrelDZ)    
         print ("EMI MODULE THICKNESS :                       ",self.layerThickness)
         print ("EMI EMI    THICKNESS :                       ",self.layerThickness)
@@ -47,8 +47,8 @@ class SandEmiRpcStripXXBuilder(gegede.builder.Builder):
         # barrel
         barrel_shape = geom.shapes.PolyhedraRegular("sand_emirpcstripxx_barrel_shape",\
                                                     numsides=self.NEmiRpcStripXXModBarrel, 
-                                                    rmin=self.LayerRmin, 
-                                                    rmax=self.LayerRmin + 
+                                                    rmin=self.layerRmin, 
+                                                    rmax=self.layerRmin + 
                                                     self.layerThickness, # 2 * for alternating structure
                                                     dz=self.BarrelDZ,
                                                     sphi=Q(self.ang))
@@ -77,7 +77,7 @@ class SandEmiRpcStripXXBuilder(gegede.builder.Builder):
         emirpcstripxx_module_lv=emirpcstripxx_module_builder.get_volume()
 
         #'''
-        emirpcstripxxMin = self.LayerRmin;
+        emirpcstripxxMin = self.layerRmin;
         ang = 360 / self.NEmiRpcStripXXModBarrel
         delta = ang/2
         #for k in range(5):

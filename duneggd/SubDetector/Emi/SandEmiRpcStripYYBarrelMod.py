@@ -10,16 +10,15 @@ class SandEmiRpcStripYYBarrelModBuilder(gegede.builder.Builder):
     #^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^~^
     def configure(self, 
 		  trapezoidDim      = None, 
-		  layerThickness    = None, 
 		  StripWidth        = None, 
-		  StripGap          = None, 
+		  layerThickness    = None,
+                  StripGap          = None, 
 		  StripMat          = None, 
 		  ynStrips          = None,
                   NEmiRpcModBarrel  = None,
-                  layerRmin         = None,
 		  **kwds):
-        self.trapezoidDim = trapezoidDim
         self.StripThickness = layerThickness
+        self.trapezoidDim = trapezoidDim
         self.StripWidth = StripWidth
         self.StripGap = StripGap
         self.StripMat = StripMat

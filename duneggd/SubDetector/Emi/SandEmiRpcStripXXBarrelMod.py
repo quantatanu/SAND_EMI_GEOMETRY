@@ -16,7 +16,6 @@ class SandEmiRpcStripXXBarrelModBuilder(gegede.builder.Builder):
 		  StripMat          = None, 
 		  xnStrips          = None,
                   NEmiRpcModBarrel  = None,
-                  layerRmin         = None,
 		  **kwds):
         self.trapezoidDim = trapezoidDim
         self.StripThickness = layerThickness

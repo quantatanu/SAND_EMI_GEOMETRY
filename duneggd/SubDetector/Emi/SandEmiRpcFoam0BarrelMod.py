@@ -12,7 +12,6 @@ class SandEmiRpcFoam0BarrelModBuilder(gegede.builder.Builder):
 		  trapezoidDim      = None, 
 		  layerThickness    = None, 
 		  FoamMat          = None, 
-                  LayerRmin         = None,
                   NEmiRpcModBarrel  = None,
 		  **kwds):
         self.trapezoidDim = trapezoidDim
