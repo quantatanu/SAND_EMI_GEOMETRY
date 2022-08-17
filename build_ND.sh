@@ -102,7 +102,7 @@ main (){
                    duneggd/Config/JUSTEMI/ND_Hall_Air_Volume.cfg \
                    duneggd/Config/JUSTEMI/ND_Hall_Rock.cfg \
                    duneggd/Config/JUSTEMI/SAND_MAGNET.cfg \
-                   duneggd/Config/JUSTEMI/SAND_EMI_RPC.cfg \
+                   duneggd/Config/Emi/SAND_EMI_RPC.cfg \
                    -w World -o $output
                 read -r -p "Do you want to display \"$output\"? [y/N] " response
                 case "$response" in

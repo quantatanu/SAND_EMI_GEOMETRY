@@ -115,7 +115,7 @@ class SANDBuilder(gegede.builder.Builder):
 
 	# Ext. muon identifier EMI
         #self.build_emi(MagIntVol_volume,geom)
-        self.build_emi(main_lv,geom)
+        #self.build_emi(main_lv,geom)
         self.build_emirpc(main_lv,geom)
 	# EM Calorimeter
         self.build_ecal(MagIntVol_volume,geom)
@@ -390,28 +390,6 @@ class SANDBuilder(gegede.builder.Builder):
                                                   rot=emcalo_rotation)
         main_lv.placements.append(emcalo_placement.name)
 
-
-
-    def build_emi(self, main_lv, geom):
-        
-        if "SANDEMI" not in self.builders:
-            print("SANDEMI builder not found")
-            return            
-
-        emi_builder=self.get_builder("SANDEMI")
-        emi_lv=emi_builder.get_volume()
-        
-        emi_position = geom.structure.Position(
-                'emi_position', Q('0m'), Q('0m'), Q('0m'))
-
-        emi_rotation = geom.structure.Rotation(
-                'emi_rotation', Q('0deg'), Q('0deg'), Q('0deg'))
-
-        emi_placement = geom.structure.Placement('emi_place',
-                                                  volume=emi_lv,
-                                                  pos=emi_position,
-                                                  rot=emi_rotation)
-        main_lv.placements.append(emi_placement.name)
 
 
     def build_emirpc(self, main_lv, geom):
